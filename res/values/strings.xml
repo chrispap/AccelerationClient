@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Νήμα της στάθμης</string>
+    <string name="app_name">Android Accelerometer</string>
+    <color name="mainSurfaceBgColor">#222222</color>
+    <string name="defaultIP">192.168.2.5</string>
+    <string name="startButtonLabel_1">START</string>
+    <string name="startButtonLabel_2">CHANGE IP</string>
+</resources>
