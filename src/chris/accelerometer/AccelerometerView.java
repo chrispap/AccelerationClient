@@ -23,41 +23,40 @@ public class AccelerometerView extends View {
 
     /* 3-CONSTRUCTORS */
     public AccelerometerView(Context context) {
-	super(context);
-	Log.d("chris", "1st constructor of GestureView");
+        super(context);
+        Log.d("chris", "1st constructor of GestureView");
     }
 
     public AccelerometerView(Context context, AttributeSet attrs) {
-	super(context, attrs);
-	Log.d("chris", "2nd constructor of GestureView");
+        super(context, attrs);
+        Log.d("chris", "2nd constructor of GestureView");
     }
 
     public AccelerometerView(Context context, AttributeSet attrs, int defStyle) {
-	super(context, attrs, defStyle);
-	Log.d("chris", "3rd constructor of GestureView");
+        super(context, attrs, defStyle);
+        Log.d("chris", "3rd constructor of GestureView");
     }
 
     /* ANDROID METHODS */
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-	width = View.MeasureSpec.getSize(widthMeasureSpec);
-	height = View.MeasureSpec.getSize(heightMeasureSpec);
-	size = Math.min(width, height);
-	center = new PointF(width / 2, height / 2);
-	this.setMinimumHeight((int) size);
-	this.setMinimumWidth((int) size);
-	setMeasuredDimension(width, height);
+        width = View.MeasureSpec.getSize(widthMeasureSpec);
+        height = View.MeasureSpec.getSize(heightMeasureSpec);
+        size = Math.min(width, height);
+        center = new PointF(width / 2, height / 2);
+        this.setMinimumHeight((int) size);
+        this.setMinimumWidth((int) size);
+        setMeasuredDimension(width, height);
     }
 
     public void onDraw(Canvas c) {
-	super.onDraw(c);
-	Paint p = new Paint();
-	p.setColor(Color.RED);
-	mark = new PointF(width / 2 - (int) (Gx * (width)) / 2, height / 2
-		+ (int) (Gy * (height)) / 2);
+        super.onDraw(c);
+        Paint p = new Paint();
+        p.setColor(Color.RED);
+        mark = new PointF(width / 2 - (int) (Gx * (width)) / 2, height / 2 + (int) (Gy * (height)) / 2);
 
-	c.drawCircle(mark.x, mark.y, (2.0f - Gz) * markDiameter / 2.0f, p);
-	p.setStrokeWidth(3);
-	c.drawLine(center.x, center.y, mark.x, mark.y, p);
+        c.drawCircle(mark.x, mark.y, (2.0f - Gz) * markDiameter / 2.0f, p);
+        p.setStrokeWidth(3);
+        c.drawLine(center.x, center.y, mark.x, mark.y, p);
 
     }
 
