@@ -11,21 +11,17 @@ import android.util.Log;
 
 public class Sender extends Thread {
 
-    final int PORT = 55832;
+    final int PORT = 55888;
     final int BUF_SIZE = 256;
-
-    private String IP = "192.168.2.12";
-
+    private String IP = null;
     boolean hostResolved = false;
     InetAddress address = null;
     DatagramSocket socket = null;
     DatagramPacket packet = null;
-
     byte[] sendBuffer = null;
     int sendBufferSize = 0;
     String dataBuffer = null;
     private boolean bufferFull = false;
-
     private boolean running = false;
 
     public Sender(String ip) {
@@ -61,9 +57,6 @@ public class Sender extends Thread {
             running = true;
             if (!isAlive()) start();
             notify();
-            Log.println(Log.INFO, "Sender", "Started sending");
-        } else {
-            Log.println(Log.ERROR, "Sender", "Host isnt resolved");
         }
     }
 
@@ -90,7 +83,7 @@ public class Sender extends Thread {
 
     private void send() {
 
-        packet = new DatagramPacket(sendBuffer, sendBufferSize, address, 55832);
+        packet = new DatagramPacket(sendBuffer, sendBufferSize, address, PORT);
 
         if (socket != null && packet != null) try {
             socket.send(packet);
@@ -106,12 +99,10 @@ public class Sender extends Thread {
             while (!running || !bufferFull) {
                 synchronized (this) {
                     try {
-                        Log.println(Log.DEBUG, "Sender", "Buffer empty. Going to sleep");
                         wait();
                     } catch (InterruptedException e) {
                     }
                 }
-                Log.println(Log.DEBUG, "Sender", "Someone woke me up");
             }
 
             moveDataToSendBuffer();

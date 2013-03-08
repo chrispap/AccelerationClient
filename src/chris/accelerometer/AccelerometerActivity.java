@@ -23,7 +23,7 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE);// No Title bar
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
         mainSurface = (AccelerometerView) (findViewById(R.id.mainSurface));
         ipEditor = (TextView) (findViewById(R.id.IPeditor));
