@@ -16,7 +16,7 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
     Button startButton;
     Button stopButton;
     Accelerometer accel;
-    Sender sender;
+    AccelerometerSender sender;
 
     boolean running = false;
 
@@ -29,7 +29,7 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
         ipEditor = (TextView) (findViewById(R.id.IPeditor));
 
         accel = new Accelerometer(this);
-        sender = new Sender(ipEditor.getText().toString());
+        sender = new AccelerometerSender(ipEditor.getText().toString());
 
         startButton = (Button) findViewById(R.id.startButton);
         startButton.setOnClickListener(new OnClickListener() {

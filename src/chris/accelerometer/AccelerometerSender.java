@@ -9,7 +9,7 @@ import java.net.UnknownHostException;
 
 import android.util.Log;
 
-public class Sender extends Thread {
+public class AccelerometerSender extends Thread {
 
     final int PORT = 55888;
     final int BUF_SIZE = 256;
@@ -24,7 +24,7 @@ public class Sender extends Thread {
     private boolean bufferFull = false;
     private boolean running = false;
 
-    public Sender(String ip) {
+    public AccelerometerSender(String ip) {
         IP = ip;
         sendBuffer = new byte[BUF_SIZE];
         resolveHost();
@@ -59,7 +59,7 @@ public class Sender extends Thread {
             notify();
         }
     }
-
+    
     public synchronized void stopSending() {
         running = false;
     }
@@ -87,7 +87,7 @@ public class Sender extends Thread {
 
         if (socket != null && packet != null) try {
             socket.send(packet);
-            Log.println(Log.INFO, "Sender", "Sent data");
+            Log.println(Log.INFO, "Sender", "Sent data to ip: " + packet.getAddress().toString() + ":" + packet.getPort());
         } catch (IOException exc) {
             Log.println(Log.ERROR, "Sender", exc.getMessage());
         }
