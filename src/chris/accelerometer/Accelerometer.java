@@ -9,13 +9,13 @@ import android.hardware.SensorManager;
 
 public class Accelerometer implements SensorEventListener {
 
-    private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
-    private float mAccelorometerMaxValue;
+    private SensorManager         mSensorManager;
+    private Sensor                mAccelerometer;
+    private float                 mAccelorometerMaxValue;
 
     private AccelerometerListener listeningActivity;
 
-    private float gx, gy, gz;
+    private float                 gx, gy, gz;
 
     public Accelerometer(Activity activity) {
         mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);

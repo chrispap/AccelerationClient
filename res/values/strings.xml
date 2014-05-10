@@ -3,7 +3,7 @@
     <string name="hello">Νήμα της στάθμης</string>
     <string name="app_name">Android Accelerometer</string>
     <color name="mainSurfaceBgColor">#222222</color>
-    <string name="defaultIP">192.168.1.6</string>
+    <string name="defaultIP">150.140.187.221</string>
     <string name="startButtonLabel_1">START</string>
     <string name="startButtonLabel_2">CHANGE IP</string>
 </resources>

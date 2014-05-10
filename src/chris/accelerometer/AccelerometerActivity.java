@@ -1,24 +1,26 @@
 package chris.accelerometer;
 
+import java.util.Locale;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
 public class AccelerometerActivity extends Activity implements AccelerometerListener {
 
     /* Instance Variables */
-    AccelerometerView mainSurface;
-    TextView ipEditor;
-    Button startButton;
-    Button stopButton;
-    Accelerometer accel;
+    AccelerometerView   mainSurface;
+    TextView            ipEditor;
+    Button              startButton;
+    Button              stopButton;
+    Accelerometer       accel;
     AccelerometerSender sender;
 
-    boolean running = false;
+    boolean             running = false;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,9 +62,7 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
     }
 
     private String makeMessage(float gx, float gy, float gz) {
-        String message = new String("");
-        message = message + Float.toString(gx) + ":" + message + Float.toString(gy) + ":" + message
-                + Float.toString(gz);
+        String message = String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz);
         return message;
     }
 

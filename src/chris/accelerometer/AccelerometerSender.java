@@ -11,18 +11,18 @@ import android.util.Log;
 
 public class AccelerometerSender extends Thread {
 
-    final int PORT = 55888;
-    final int BUF_SIZE = 256;
-    private String IP = null;
-    boolean hostResolved = false;
-    InetAddress address = null;
-    DatagramSocket socket = null;
-    DatagramPacket packet = null;
-    byte[] sendBuffer = null;
-    int sendBufferSize = 0;
-    String dataBuffer = null;
-    private boolean bufferFull = false;
-    private boolean running = false;
+    final int       PORT           = 55888;
+    final int       BUF_SIZE       = 32;
+    private String  IP             = null;
+    boolean         hostResolved   = false;
+    InetAddress     address        = null;
+    DatagramSocket  socket         = null;
+    DatagramPacket  packet         = null;
+    byte[]          sendBuffer     = null;
+    int             sendBufferSize = 0;
+    String          dataBuffer     = null;
+    private boolean bufferFull     = false;
+    private boolean running        = false;
 
     public AccelerometerSender(String ip) {
         IP = ip;
@@ -59,14 +59,13 @@ public class AccelerometerSender extends Thread {
             notify();
         }
     }
-    
+
     public synchronized void stopSending() {
         running = false;
     }
 
     public synchronized void putDataToBuffer(String data) {
         dataBuffer = data;
-        data = "2.0:2.0:3.0";
         bufferFull = true;
         notify();
     }
@@ -85,12 +84,14 @@ public class AccelerometerSender extends Thread {
 
         packet = new DatagramPacket(sendBuffer, sendBufferSize, address, PORT);
 
-        if (socket != null && packet != null) try {
-            socket.send(packet);
-            Log.println(Log.INFO, "Sender", "Sent data to ip: " + packet.getAddress().toString() + ":" + packet.getPort());
-        } catch (IOException exc) {
-            Log.println(Log.ERROR, "Sender", exc.getMessage());
-        }
+        if (socket != null && packet != null)
+            try {
+                socket.send(packet);
+                Log.println(Log.INFO, "Sender",
+                    "Sent data to ip: " + packet.getAddress().toString() + ":" + packet.getPort());
+            } catch (IOException exc) {
+                Log.println(Log.ERROR, "Sender", exc.getMessage());
+            }
     }
 
     public void run() {

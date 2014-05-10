@@ -10,16 +10,12 @@ import android.util.Log;
 import android.view.View;
 
 public class AccelerometerView extends View {
-
-    /* View dimensions */
-    int width, height, size;
-
-    /* View components */
-    PointF mark, center;
     final float markDiameter = 50;
-
-    /* Accelometer Values */
-    float Gx = 0, Gy = 0, Gz = 0;
+    int         width, height, size;
+    PointF      mark, center;
+    float       Gx           = 0;
+    float       Gy           = 0;
+    float       Gz           = 0;
 
     /* 3-CONSTRUCTORS */
     public AccelerometerView(Context context) {
