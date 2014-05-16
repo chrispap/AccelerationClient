@@ -1,33 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    >
-<TextView  
-    android:layout_width="fill_parent" 
-    android:layout_height="wrap_content" 
-    android:text="@string/hello"
-	android:gravity="center_horizontal" 
-	android:textStyle="bold"
-	android:textSize="28px"
-/>
+    android:orientation="vertical" >
 
-<Button 
-	android:layout_width="fill_parent" 
-	android:id="@+id/startButton" 
-	android:layout_height="wrap_content" android:text="@string/startButtonLabel_1">
-</Button>
-<Button android:text="STOP" android:layout_width="fill_parent" android:id="@+id/stopButton" android:layout_height="wrap_content"></Button>
-<EditText android:layout_width="match_parent" android:text="@string/defaultIP" android:layout_height="wrap_content" android:id="@+id/IPeditor" android:phoneNumber="true"></EditText>
+    <TextView
+        android:id="@+id/txt_title"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="@string/app_name"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
-<chris.accelerometer.AccelerometerView 
-	android:layout_height="match_parent" 
-	android:background="@color/mainSurfaceBgColor" 
-	android:layout_width="match_parent" 
-	android:layout_margin="5px" 
-	android:id="@+id/mainSurface"
-	>
-</chris.accelerometer.AccelerometerView>
+    <Button
+        android:id="@+id/btn_start_stop"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_start" >
+    </Button>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <EditText
+            android:id="@+id/txtedit_ip"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="2"
+            android:ems="10"
+            android:inputType="number"
+            android:labelFor="@+id/txtedit_ip"
+            android:text="@string/defaultIP" />
+
+        <Button
+            android:id="@+id/btn_change_ip"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:text="@string/label_change_ip" />
+    </LinearLayout>
+
+    <chris.accelerometer.AccelerometerCanvas
+        android:id="@+id/canvas_accel"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="5dp"
+        android:background="@color/mainSurfaceBgColor" >
+    </chris.accelerometer.AccelerometerCanvas>
 
 </LinearLayout>

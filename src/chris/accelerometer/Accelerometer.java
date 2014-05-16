@@ -9,23 +9,19 @@ import android.hardware.SensorManager;
 
 public class Accelerometer implements SensorEventListener {
 
+    private AccelerometerListener mListener;
     private SensorManager         mSensorManager;
-    private Sensor                mAccelerometer;
-    private float                 mAccelorometerMaxValue;
-
-    private AccelerometerListener listeningActivity;
-
+    private Sensor                mAccelSensor;
     private float                 gx, gy, gz;
 
     public Accelerometer(Activity activity) {
         mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mAccelorometerMaxValue = mAccelerometer.getMaximumRange();
+        mAccelSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     }
 
     public void register(AccelerometerListener interestedActivity) {
-        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_GAME);
-        listeningActivity = interestedActivity;
+        mSensorManager.registerListener(this, mAccelSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        mListener = interestedActivity;
     }
 
     public void unregister() {
@@ -34,22 +30,21 @@ public class Accelerometer implements SensorEventListener {
 
     @Override
     public void onAccuracyChanged(Sensor arg0, int arg1) {
-        // TODO Auto-generated method stub
 
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        mAccelorometerMaxValue = Math.max(mAccelorometerMaxValue, event.values[0]);
-        mAccelorometerMaxValue = Math.max(mAccelorometerMaxValue, event.values[1]);
-        mAccelorometerMaxValue = Math.max(mAccelorometerMaxValue, event.values[2]);
-
-        gx = event.values[0] / (mAccelorometerMaxValue);
-        gy = event.values[1] / (mAccelorometerMaxValue);
-        gz = event.values[2] / (mAccelorometerMaxValue);
-
-        this.listeningActivity.onAccelerationChanged(gx, gy, gz);
-
+        gx = event.values[0];
+        gy = event.values[1];
+        gz = event.values[2];
+        this.mListener.onAccelerationChanged(gx, gy, gz);
     }
+
+}
+
+interface AccelerometerListener {
+
+    public void onAccelerationChanged(float x, float y, float z);
 
 }

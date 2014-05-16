@@ -1,9 +1,9 @@
 package chris.accelerometer;
 
-import java.util.Locale;
-
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -12,87 +12,77 @@ import android.widget.TextView;
 
 public class AccelerometerActivity extends Activity implements AccelerometerListener {
 
-    /* Instance Variables */
-    AccelerometerView   mainSurface;
-    TextView            ipEditor;
-    Button              startButton;
-    Button              stopButton;
-    Accelerometer       accel;
-    AccelerometerSender sender;
-
-    boolean             running = false;
+    boolean             mRunning;
+    Button              mBtnStartStop;
+    TextView            mTxtEditIp;
+    Accelerometer       mAccel;
+    AccelerometerCanvas mAccelCanvas;
+    AccelerometerSender mAccelSender;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
-        mainSurface = (AccelerometerView) (findViewById(R.id.mainSurface));
-        ipEditor = (TextView) (findViewById(R.id.IPeditor));
+        mRunning = true;
 
-        accel = new Accelerometer(this);
-        sender = new AccelerometerSender(ipEditor.getText().toString());
-
-        startButton = (Button) findViewById(R.id.startButton);
-        startButton.setOnClickListener(new OnClickListener() {
+        mAccelCanvas = (AccelerometerCanvas) (findViewById(R.id.canvas_accel));
+        mTxtEditIp = (TextView) (findViewById(R.id.txtedit_ip));
+        mBtnStartStop = (Button) findViewById(R.id.btn_start_stop);
+        mBtnStartStop.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                start();
+                if (mRunning) {
+                    stop();
+                    mBtnStartStop.setText(R.string.label_start);
+                }
+                else {
+                    start();
+                    mBtnStartStop.setText(R.string.label_stop);
+                }
+            }
+        });
+        ((Button) findViewById(R.id.btn_change_ip)).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mAccelSender.changeIP(mTxtEditIp.getText().toString());
             }
         });
 
-        stopButton = (Button) findViewById(R.id.stopButton);
-        stopButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                stop();
-            }
-        });
-
+        mAccel = new Accelerometer(this);
+        mAccelSender = new AccelerometerSender(mTxtEditIp.getText().toString());
     }
 
     protected void onResume() {
         super.onResume();
-        start();
+        if (mRunning) {
+            start();
+            mBtnStartStop.setText(R.string.label_stop);
+        }
     }
 
     protected void onPause() {
         super.onPause();
+        boolean wasRunning = mRunning;
         stop();
+        mRunning = wasRunning;
     }
 
-    private String makeMessage(float gx, float gy, float gz) {
-        String message = String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz);
-        return message;
+    private void start() {
+        mAccel.register(this);
+        //mAccelSender.startSending();
+        mRunning = true;
+    }
+
+    private void stop() {
+        mAccelSender.stopSending();
+        mAccel.unregister();
+        mRunning = false;
     }
 
     @Override
     public void onAccelerationChanged(float gx, float gy, float gz) {
-        mainSurface.Gx = gx;
-        mainSurface.Gy = gy;
-        mainSurface.Gz = gz;
-        mainSurface.invalidate();
-
-        String msg = makeMessage(gx, gy, gz);
-        sender.putDataToBuffer(msg);
-    }
-
-    protected void start() {
-        if (!running) {
-            accel.register(this);
-            sender.startSending();
-            startButton.setText(R.string.startButtonLabel_2);
-        } else {
-            sender.changeIP(ipEditor.getText().toString());
-        }
-        running = true;
-    }
-
-    protected void stop() {
-        sender.stopSending();
-        accel.unregister();
-        running = false;
-        startButton.setText(R.string.startButtonLabel_1);
+        mAccelCanvas.onAccelerationChanged(gx, gy, gz);
+        // mAccelSender.putDataToBuffer(String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz));
     }
 
 }
