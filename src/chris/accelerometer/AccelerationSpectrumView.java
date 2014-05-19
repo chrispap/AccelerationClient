@@ -4,23 +4,30 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.View;
 import edu.emory.mathcs.jtransforms.fft.FloatFFT_1D;
 
 public class AccelerationSpectrumView extends View implements AccelerometerListener {
 
+    /* For Drawing */
     private float       mWidth, mHeight;
     private Paint       mPaint;
+    private float[]     mSpectrumLines;
+
+    /* For Spectrum calculation */
+    private long        mDT      = 10;
+    private long        mLastSampleTime;
+    private int         mFFTSize = 64;
     private int         mSampleCounter;
+    private float[]     mBufAccel, mBufFFT, mBufSpectrum;
     private FloatFFT_1D mFFT;
-    private final int   mFFTSize = 128;
-    private float[]     mBufAccel, mBufFFT, mSpectrum, mSpectrumLines;
 
     private void allocBuffers() {
         mBufAccel = new float[mFFTSize];
         mBufFFT = new float[mFFTSize];
-        mSpectrum = new float[mFFTSize / 2];
+        mBufSpectrum = new float[mFFTSize / 2];
         mSpectrumLines = new float[mFFTSize * 2];
         mFFT = new FloatFFT_1D(mFFTSize);
 
@@ -49,10 +56,9 @@ public class AccelerationSpectrumView extends View implements AccelerometerListe
 
     /* Logic */
     private void updateFreqLines() {
-        for (int i = 0; i < mFFTSize / 2; i++)
-        {
-            float x = mWidth / mFFTSize * 2 * i;
-            float y = mSpectrum[i] * 20;
+        for (int i = 0; i < mFFTSize / 2; i++) {
+            float x = (mWidth / (mFFTSize / 2)) * (i + 0.5f);
+            float y = (mBufSpectrum[i] * 8);
 
             mSpectrumLines[(i << 2) + 0] = x;
             mSpectrumLines[(i << 2) + 1] = mHeight;
@@ -62,26 +68,38 @@ public class AccelerationSpectrumView extends View implements AccelerometerListe
     }
 
     public void onAccelerationChanged(float gx, float gy, float gz) {
+        long now = SystemClock.elapsedRealtime();
+        int n = (int) Math.floor((now - mLastSampleTime) / mDT);
+        if (n == 0) return;
+        mLastSampleTime = mLastSampleTime + n * mDT;
+
         /* Shift up the old acceleration values 
-         * and store the new one*/
-        for (int i = 0; i < mFFTSize - 1; i++)
-            mBufAccel[i] = mBufAccel[i + 1];
+         * and store the new one */
+        for (int i = 0; i < mFFTSize - n; i++)
+            mBufAccel[i] = mBufAccel[i + n];
         mBufAccel[mFFTSize - 1] = (float) Math.sqrt(gx * gx + gy * gy + gz * gz);
-        mSampleCounter++;
+
+        if (n < mFFTSize) {
+            float dA = (mBufAccel[mFFTSize - 1] - mBufAccel[mFFTSize - n - 1]) / n;
+            for (int i = 0; i < n - 1; i++)
+                mBufAccel[mFFTSize - n + i] = mBufAccel[mFFTSize - n - 1] + dA * (i + 1);
+        }
+
+        mSampleCounter += n;
 
         /* Perform FFT and update Spectrum */
         for (int i = 0; i < mFFTSize; i++)
             mBufFFT[i] = mBufAccel[i];
         mFFT.realForward(mBufFFT);
-        mBufFFT[0] = 0; // Depress DC component.
 
         for (int i = 0; i < mFFTSize / 2; i++) {
             final float aRe = mBufFFT[(i << 1)];
             final float aIm = mBufFFT[(i << 1) + 1];
             final float a = (float) Math.sqrt(aRe * aRe + aIm * aIm);
-
-            mSpectrum[i] = a;
+            mBufSpectrum[i] = a;
         }
+
+        mBufSpectrum[0] = 0; //Depress DC component.
 
         updateFreqLines();
         invalidate();
