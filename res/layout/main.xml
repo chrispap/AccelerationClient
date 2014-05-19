@@ -13,16 +13,10 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    <Button
-        android:id="@+id/btn_start_stop"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/label_start" >
-    </Button>
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:visibility="gone" >
 
         <EditText
             android:id="@+id/txtedit_ip"
@@ -32,7 +26,10 @@
             android:ems="10"
             android:inputType="number"
             android:labelFor="@+id/txtedit_ip"
-            android:text="@string/defaultIP" />
+            android:text="@string/defaultIP" >
+
+            <requestFocus />
+        </EditText>
 
         <Button
             android:id="@+id/btn_change_ip"
@@ -42,12 +39,27 @@
             android:text="@string/label_change_ip" />
     </LinearLayout>
 
-    <chris.accelerometer.AccelerometerCanvas
-        android:id="@+id/canvas_accel"
+    <Button
+        android:id="@+id/btn_start_stop"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_start" >
+    </Button>
+
+    <chris.accelerometer.AccelerationView
+        android:id="@+id/view_accel"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="100dp"
         android:layout_margin="5dp"
         android:background="@color/mainSurfaceBgColor" >
-    </chris.accelerometer.AccelerometerCanvas>
+    </chris.accelerometer.AccelerationView>
+
+    <chris.accelerometer.AccelerationSpectrumView
+        android:id="@+id/view_spectrum"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:layout_margin="5dp"
+        android:background="@color/mainSurfaceBgColor" >
+    </chris.accelerometer.AccelerationSpectrumView>
 
 </LinearLayout>

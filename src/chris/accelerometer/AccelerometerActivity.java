@@ -2,8 +2,6 @@ package chris.accelerometer;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -12,20 +10,22 @@ import android.widget.TextView;
 
 public class AccelerometerActivity extends Activity implements AccelerometerListener {
 
-    boolean             mRunning;
-    Button              mBtnStartStop;
-    TextView            mTxtEditIp;
-    Accelerometer       mAccel;
-    AccelerometerCanvas mAccelCanvas;
-    AccelerometerSender mAccelSender;
+    boolean                  mRunning;
+    Button                   mBtnStartStop;
+    TextView                 mTxtEditIp;
+    Accelerometer            mAccelSensor;
+    AccelerometerSender      mAccelSender;
+    AccelerationView         mAccelView;
+    AccelerationSpectrumView mAccelSpectrumView;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
-        mRunning = true;
 
-        mAccelCanvas = (AccelerometerCanvas) (findViewById(R.id.canvas_accel));
+        /* Find views and set listeners. */
+        mAccelView = (AccelerationView) (findViewById(R.id.view_accel));
+        mAccelSpectrumView = (AccelerationSpectrumView) (findViewById(R.id.view_spectrum));
         mTxtEditIp = (TextView) (findViewById(R.id.txtedit_ip));
         mBtnStartStop = (Button) findViewById(R.id.btn_start_stop);
         mBtnStartStop.setOnClickListener(new OnClickListener() {
@@ -48,8 +48,9 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
             }
         });
 
-        mAccel = new Accelerometer(this);
+        mAccelSensor = new Accelerometer(this);
         mAccelSender = new AccelerometerSender(mTxtEditIp.getText().toString());
+        mRunning = true;
     }
 
     protected void onResume() {
@@ -68,21 +69,22 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
     }
 
     private void start() {
-        mAccel.register(this);
+        mAccelSensor.register(this);
         //mAccelSender.startSending();
         mRunning = true;
     }
 
     private void stop() {
         mAccelSender.stopSending();
-        mAccel.unregister();
+        mAccelSensor.unregister();
         mRunning = false;
     }
 
     @Override
     public void onAccelerationChanged(float gx, float gy, float gz) {
-        mAccelCanvas.onAccelerationChanged(gx, gy, gz);
-        // mAccelSender.putDataToBuffer(String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz));
+        mAccelView.onAccelerationChanged(gx, gy, gz);
+        mAccelSpectrumView.onAccelerationChanged(gx, gy, gz);
+        mAccelSender.onAccelerationChanged(gx, gy, gz);
     }
 
 }

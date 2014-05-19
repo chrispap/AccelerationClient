@@ -6,55 +6,33 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
-import edu.emory.mathcs.jtransforms.fft.FloatFFT_1D;
 
-public class AccelerometerCanvas extends View implements AccelerometerListener {
+public class AccelerationView extends View implements AccelerometerListener {
 
     private int mWidth, mHeight, mSize;
     private PointF mMark, mCenter;
     private Paint  mPaint;
     float          mGx, mGy, mGz;
 
-    final int      n = 1024*4;
-    float[]        a;
-    FloatFFT_1D    fft;
-
     private void init() {
         mMark = new PointF();
         mCenter = new PointF();
         mPaint = new Paint();
-
-        a = new float[n];
-        fft = new FloatFFT_1D(n);
-
-        for (int i = 0; i < n; i++)
-            a[i] = (float) Math.cos((125.663706144 * 0.015) * i);
-        // cos(2π*20*t)
-        // f=20Hz
-        // f_sample = 67Hz
-        // t_sample = 15ms
-
-        fft.realForward(a);
-
-        for (int i = 0; i < n; i+=2)
-            Log.i("accel.fft", "FFT[i] = " + Math.sqrt(a[i]*a[i]  + a[i+1]*a[i+1] ));
-        
     }
 
     /* 3 Constructors */
-    public AccelerometerCanvas(Context context) {
+    public AccelerationView(Context context) {
         super(context);
         init();
     }
 
-    public AccelerometerCanvas(Context context, AttributeSet attrs) {
+    public AccelerationView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public AccelerometerCanvas(Context context, AttributeSet attrs, int defStyle) {
+    public AccelerationView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
     }

@@ -6,27 +6,28 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Locale;
 
 import android.util.Log;
 
-public class AccelerometerSender extends Thread {
+public class AccelerometerSender extends Thread implements AccelerometerListener {
 
     private final int      PORT     = 55888;
     private final int      BUF_SIZE = 32;
-    private byte[]         mSendBuffer;
-    private int            mSendBufferSize;
-    private boolean        mBufferFull;
+    private byte[]         mBufTx;
+    private int            mBufTxSize;
     private boolean        mRunning;
     private boolean        mHostResolved;
-    private String         mIP;
-    private String         mDataBuffer;
-    private InetAddress    mAddress;
+    private boolean        mBufInFull;
+    private String         mBufIn;
+    private String         mHostIP;
+    private InetAddress    mHostAddress;
     private DatagramSocket mSocket;
     private DatagramPacket mPacket;
 
     public AccelerometerSender(String ip) {
-        mIP = ip;
-        mSendBuffer = new byte[BUF_SIZE];
+        mHostIP = ip;
+        mBufTx = new byte[BUF_SIZE];
         resolveHost();
     }
 
@@ -35,7 +36,7 @@ public class AccelerometerSender extends Thread {
             try {
                 Log.println(Log.INFO, "Sender", "Trying to init UDP Packet");
                 mSocket = new DatagramSocket();
-                mAddress = InetAddress.getByName(mIP);
+                mHostAddress = InetAddress.getByName(mHostIP);
             } catch (SocketException exc) {
                 Log.println(Log.ERROR, "Sender", exc.getMessage());
             } catch (UnknownHostException exc) {
@@ -47,18 +48,17 @@ public class AccelerometerSender extends Thread {
     }
 
     private synchronized void moveDataToSendBuffer() {
-        byte[] db = mDataBuffer.getBytes();
+        byte[] db = mBufIn.getBytes();
         int i;
-        for (i = 0; i < mDataBuffer.length(); i++)
-            mSendBuffer[i] = db[i];
-        mSendBufferSize = i - 1;
-        mBufferFull = false;
+        for (i = 0; i < mBufIn.length(); i++)
+            mBufTx[i] = db[i];
+        mBufTxSize = i - 1;
+        mBufInFull = false;
         notify();
     }
 
     private void send() {
-
-        mPacket = new DatagramPacket(mSendBuffer, mSendBufferSize, mAddress, PORT);
+        mPacket = new DatagramPacket(mBufTx, mBufTxSize, mHostAddress, PORT);
 
         if (mSocket != null && mPacket != null)
             try {
@@ -68,6 +68,21 @@ public class AccelerometerSender extends Thread {
             } catch (IOException exc) {
                 Log.println(Log.ERROR, "Sender", exc.getMessage());
             }
+    }
+
+    @Override
+    public void run() {
+        while (!mRunning || !mBufInFull) {
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                }
+            }
+        }
+
+        moveDataToSendBuffer();
+        send();
     }
 
     public synchronized void startSending() {
@@ -82,33 +97,21 @@ public class AccelerometerSender extends Thread {
         mRunning = false;
     }
 
-    public synchronized void putDataToBuffer(String data) {
-        mDataBuffer = data;
-        mBufferFull = true;
+    private synchronized void putDataToBuffer(String data) {
+        mBufIn = data;
+        mBufInFull = true;
         notify();
     }
 
     public synchronized void changeIP(String ip) {
-        mIP = ip;
+        mHostIP = ip;
         mHostResolved = false;
         resolveHost();
     }
 
-    public void run() {
-        while (true) {
-
-            while (!mRunning || !mBufferFull) {
-                synchronized (this) {
-                    try {
-                        wait();
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-
-            moveDataToSendBuffer();
-            send();
-
-        }
+    @Override
+    public void onAccelerationChanged(float gx, float gy, float gz) {
+        putDataToBuffer(String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz));
     }
+
 }
