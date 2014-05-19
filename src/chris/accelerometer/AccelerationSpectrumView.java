@@ -4,28 +4,30 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.View;
 import edu.emory.mathcs.jtransforms.fft.FloatFFT_1D;
 
 public class AccelerationSpectrumView extends View implements AccelerometerListener {
 
-    private int   mWidth, mHeight, mSize;
-    private Paint mPaint;
-    int           mSampleCounter;
-    long          mLastSampleTime;
-    FloatFFT_1D   mFFT;
-    final int     mFFTSize = 128;
-    float[]       mBufAccel, mBufFFT, mSpectrum, mSpectrumLines;
+    private float       mWidth, mHeight;
+    private Paint       mPaint;
+    private int         mSampleCounter;
+    private FloatFFT_1D mFFT;
+    private final int   mFFTSize = 128;
+    private float[]     mBufAccel, mBufFFT, mSpectrum, mSpectrumLines;
 
-    private void init() {
+    private void allocBuffers() {
         mBufAccel = new float[mFFTSize];
         mBufFFT = new float[mFFTSize];
         mSpectrum = new float[mFFTSize / 2];
         mSpectrumLines = new float[mFFTSize * 2];
         mFFT = new FloatFFT_1D(mFFTSize);
 
+    }
+
+    private void init() {
+        allocBuffers();
         mPaint = new Paint();
     }
 
@@ -45,42 +47,21 @@ public class AccelerationSpectrumView extends View implements AccelerometerListe
         init();
     }
 
-    /* Android */
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        mWidth = View.MeasureSpec.getSize(widthMeasureSpec);
-        mHeight = View.MeasureSpec.getSize(heightMeasureSpec);
-        mSize = Math.min(mWidth, mHeight);
-        this.setMinimumHeight((int) mSize);
-        this.setMinimumWidth((int) mSize);
-        setMeasuredDimension(mWidth, mHeight);
-    }
-
-    public void onDraw(Canvas c) {
-        super.onDraw(c);
-        if (mSampleCounter < mFFTSize) return;
-        mPaint.setColor(Color.RED);
-        mPaint.setStrokeWidth(mWidth / mFFTSize);
-        c.drawLines(mSpectrumLines, mPaint);
-    }
-
+    /* Logic */
     private void updateFreqLines() {
-        for (int i = 0; i < mFFTSize / 2; i++) {
-            float x = (float) mWidth / mFFTSize * 2 * i;
-            float y = mSpectrum[i];
-            // Line start
+        for (int i = 0; i < mFFTSize / 2; i++)
+        {
+            float x = mWidth / mFFTSize * 2 * i;
+            float y = mSpectrum[i] * 20;
+
             mSpectrumLines[(i << 2) + 0] = x;
             mSpectrumLines[(i << 2) + 1] = mHeight;
-            // Line end
             mSpectrumLines[(i << 2) + 2] = x;
             mSpectrumLines[(i << 2) + 3] = mHeight - y;
         }
     }
 
-    @Override
     public void onAccelerationChanged(float gx, float gy, float gz) {
-        final long millis = SystemClock.elapsedRealtime();
-        mLastSampleTime = millis;
-
         /* Shift up the old acceleration values 
          * and store the new one*/
         for (int i = 0; i < mFFTSize - 1; i++)
@@ -94,15 +75,49 @@ public class AccelerationSpectrumView extends View implements AccelerometerListe
         mFFT.realForward(mBufFFT);
         mBufFFT[0] = 0; // Depress DC component.
 
-        /* Store the FFT result in spectrum lines */
         for (int i = 0; i < mFFTSize / 2; i++) {
-            final float aRe = mBufFFT[(i << 1)]; // Re{Spectrum}
-            final float aIm = mBufFFT[(i << 1) + 1]; // Im{Spectrum}
-            mSpectrum[i] = 20.0f * (float) Math.sqrt(aRe * aRe + aIm * aIm);
+            final float aRe = mBufFFT[(i << 1)];
+            final float aIm = mBufFFT[(i << 1) + 1];
+            final float a = (float) Math.sqrt(aRe * aRe + aIm * aIm);
+
+            mSpectrum[i] = a;
         }
 
         updateFreqLines();
         invalidate();
+    }
+
+    /* Android */
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        mWidth = View.MeasureSpec.getSize(widthMeasureSpec);
+        mHeight = View.MeasureSpec.getSize(heightMeasureSpec);
+        int minSize = (int) Math.min(mWidth, mHeight);
+        this.setMinimumHeight(minSize);
+        this.setMinimumWidth(minSize);
+        setMeasuredDimension((int) mWidth, (int) mHeight);
+    }
+
+    public void onDraw(Canvas c) {
+        super.onDraw(c);
+        if (mSampleCounter < mFFTSize) return;
+
+        /* Draw one line at each frequency */
+        mPaint.setColor(Color.LTGRAY);
+        mPaint.setStrokeWidth(2);
+        c.drawLines(mSpectrumLines, mPaint);
+
+        /* Link the tops of every line */
+        mPaint.setColor(Color.RED);
+        mPaint.setStrokeWidth(4);
+        for (int i = 0; i < mFFTSize / 2 - 1; i++) {
+            c.drawLine(
+                mSpectrumLines[(i << 2) + 2],
+                mSpectrumLines[(i << 2) + 3],
+                mSpectrumLines[(i << 2) + 6],
+                mSpectrumLines[(i << 2) + 7],
+                mPaint);
+        }
+
     }
 
 }

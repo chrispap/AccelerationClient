@@ -3,7 +3,7 @@
 
     <string name="app_name">NoTremor </string>
 
-    <color name="mainSurfaceBgColor">#222222</color>
+    <color name="mainSurfaceBgColor">#202020</color>
 
     <string name="defaultIP">150.140.187.221</string>
     <string name="label_start">START</string>
