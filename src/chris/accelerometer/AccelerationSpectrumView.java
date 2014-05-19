@@ -15,9 +15,8 @@ public class AccelerationSpectrumView extends View implements AccelerometerListe
     private Paint mPaint;
     int           mSampleCounter;
     long          mLastSampleTime;
-
     FloatFFT_1D   mFFT;
-    final int     mFFTSize = 64;
+    final int     mFFTSize = 128;
     float[]       mBufAccel, mBufFFT, mSpectrum, mSpectrumLines;
 
     private void init() {
@@ -58,6 +57,7 @@ public class AccelerationSpectrumView extends View implements AccelerometerListe
 
     public void onDraw(Canvas c) {
         super.onDraw(c);
+        if (mSampleCounter < mFFTSize) return;
         mPaint.setColor(Color.RED);
         mPaint.setStrokeWidth(mWidth / mFFTSize);
         c.drawLines(mSpectrumLines, mPaint);
@@ -78,36 +78,30 @@ public class AccelerationSpectrumView extends View implements AccelerometerListe
 
     @Override
     public void onAccelerationChanged(float gx, float gy, float gz) {
-        long millis = SystemClock.elapsedRealtime();
-
-        if (millis - mLastSampleTime < 5) return;
+        final long millis = SystemClock.elapsedRealtime();
         mLastSampleTime = millis;
 
-        /* Shift up the old acceleration values */
+        /* Shift up the old acceleration values 
+         * and store the new one*/
         for (int i = 0; i < mFFTSize - 1; i++)
             mBufAccel[i] = mBufAccel[i + 1];
-
-        /* Store the new acceleration value */
         mBufAccel[mFFTSize - 1] = (float) Math.sqrt(gx * gx + gy * gy + gz * gz);
-
-        ++mSampleCounter;
+        mSampleCounter++;
 
         /* Perform FFT and update Spectrum */
         for (int i = 0; i < mFFTSize; i++)
             mBufFFT[i] = mBufAccel[i];
-
         mFFT.realForward(mBufFFT);
-
         mBufFFT[0] = 0; // Depress DC component.
 
+        /* Store the FFT result in spectrum lines */
         for (int i = 0; i < mFFTSize / 2; i++) {
-            final float a_re = mBufFFT[(i << 1)]; // Real 
-            final float a_im = mBufFFT[(i << 1) + 1]; // Imaginary
-            mSpectrum[i] = 20.0f * (float) Math.sqrt(a_re * a_re + a_im * a_im);
+            final float aRe = mBufFFT[(i << 1)]; // Re{Spectrum}
+            final float aIm = mBufFFT[(i << 1) + 1]; // Im{Spectrum}
+            mSpectrum[i] = 20.0f * (float) Math.sqrt(aRe * aRe + aIm * aIm);
         }
 
         updateFreqLines();
-
         invalidate();
     }
 
