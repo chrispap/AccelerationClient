@@ -8,7 +8,7 @@ import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class AccelerationView extends View implements AccelerometerListener {
+public class AccelView extends View implements AccelerometerListener {
 
     private int mWidth, mHeight, mSize;
     private PointF mMark, mCenter;
@@ -22,17 +22,17 @@ public class AccelerationView extends View implements AccelerometerListener {
     }
 
     /* 3 Constructors */
-    public AccelerationView(Context context) {
+    public AccelView(Context context) {
         super(context);
         init();
     }
 
-    public AccelerationView(Context context, AttributeSet attrs) {
+    public AccelView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public AccelerationView(Context context, AttributeSet attrs, int defStyle) {
+    public AccelView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
     }

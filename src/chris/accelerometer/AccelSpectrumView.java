@@ -9,7 +9,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import edu.emory.mathcs.jtransforms.fft.FloatFFT_1D;
 
-public class AccelerationSpectrumView extends View implements AccelerometerListener {
+public class AccelSpectrumView extends View implements AccelerometerListener {
 
     /* For Drawing */
     private float       mWidth, mHeight;
@@ -39,17 +39,17 @@ public class AccelerationSpectrumView extends View implements AccelerometerListe
     }
 
     /* 3 Constructors */
-    public AccelerationSpectrumView(Context context) {
+    public AccelSpectrumView(Context context) {
         super(context);
         init();
     }
 
-    public AccelerationSpectrumView(Context context, AttributeSet attrs) {
+    public AccelSpectrumView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public AccelerationSpectrumView(Context context, AttributeSet attrs, int defStyle) {
+    public AccelSpectrumView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
     }

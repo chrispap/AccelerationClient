@@ -10,7 +10,7 @@ import java.util.Locale;
 
 import android.util.Log;
 
-public class AccelerometerSender extends Thread implements AccelerometerListener {
+public class AccelSender extends Thread implements AccelerometerListener {
 
     private final int      PORT     = 55888;
     private final int      BUF_SIZE = 32;
@@ -25,7 +25,7 @@ public class AccelerometerSender extends Thread implements AccelerometerListener
     private DatagramSocket mSocket;
     private DatagramPacket mPacket;
 
-    public AccelerometerSender(String ip) {
+    public AccelSender(String ip) {
         mHostIP = ip;
         mBufTx = new byte[BUF_SIZE];
         resolveHost();
@@ -54,7 +54,7 @@ public class AccelerometerSender extends Thread implements AccelerometerListener
             mBufTx[i] = db[i];
         mBufTxSize = i - 1;
         mBufInFull = false;
-        notify();
+        notifyAll();
     }
 
     private void send() {
@@ -72,24 +72,26 @@ public class AccelerometerSender extends Thread implements AccelerometerListener
 
     @Override
     public void run() {
-        while (!mRunning || !mBufInFull) {
-            synchronized (this) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
+        do {
+            while (!mRunning || !mBufInFull) {
+                synchronized (this) {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                    }
                 }
             }
-        }
 
-        moveDataToSendBuffer();
-        send();
+            moveDataToSendBuffer();
+            send();
+        } while (true);
     }
 
     public synchronized void startSending() {
         if (mHostResolved) {
             mRunning = true;
             if (!isAlive()) start();
-            notify();
+            notifyAll();
         }
     }
 
@@ -100,7 +102,7 @@ public class AccelerometerSender extends Thread implements AccelerometerListener
     private synchronized void putDataToBuffer(String data) {
         mBufIn = data;
         mBufInFull = true;
-        notify();
+        notifyAll();
     }
 
     public synchronized void changeIP(String ip) {

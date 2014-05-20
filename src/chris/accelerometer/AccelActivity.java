@@ -8,15 +8,15 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class AccelerometerActivity extends Activity implements AccelerometerListener {
+public class AccelActivity extends Activity implements AccelerometerListener {
 
     boolean                  mRunning;
     Button                   mBtnStartStop;
     TextView                 mTxtEditIp;
-    Accelerometer            mAccelSensor;
-    AccelerometerSender      mAccelSender;
-    AccelerationView         mAccelView;
-    AccelerationSpectrumView mAccelSpectrumView;
+    AccelSensor            mAccelSensor;
+    AccelSender      mAccelSender;
+    AccelView         mAccelView;
+    AccelSpectrumView mAccelSpectrumView;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,8 +24,8 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
         setContentView(R.layout.main);
 
         /* Find views and set listeners. */
-        mAccelView = (AccelerationView) (findViewById(R.id.view_accel));
-        mAccelSpectrumView = (AccelerationSpectrumView) (findViewById(R.id.view_spectrum));
+        mAccelView = (AccelView) (findViewById(R.id.view_accel));
+        mAccelSpectrumView = (AccelSpectrumView) (findViewById(R.id.view_spectrum));
         mTxtEditIp = (TextView) (findViewById(R.id.txtedit_ip));
         mBtnStartStop = (Button) findViewById(R.id.btn_start_stop);
         mBtnStartStop.setOnClickListener(new OnClickListener() {
@@ -48,8 +48,8 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
             }
         });
 
-        mAccelSensor = new Accelerometer(this);
-        mAccelSender = new AccelerometerSender(mTxtEditIp.getText().toString());
+        mAccelSensor = new AccelSensor(this);
+        mAccelSender = new AccelSender(mTxtEditIp.getText().toString());
         mRunning = true;
     }
 
@@ -70,13 +70,13 @@ public class AccelerometerActivity extends Activity implements AccelerometerList
 
     private void start() {
         mAccelSensor.register(this);
-        //mAccelSender.startSending();
+        mAccelSender.startSending();
         mRunning = true;
     }
 
     private void stop() {
-        mAccelSender.stopSending();
         mAccelSensor.unregister();
+        mAccelSender.stopSending();
         mRunning = false;
     }
 

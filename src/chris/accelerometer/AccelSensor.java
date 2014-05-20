@@ -7,14 +7,14 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
-public class Accelerometer implements SensorEventListener {
+public class AccelSensor implements SensorEventListener {
 
     private AccelerometerListener mListener;
     private SensorManager         mSensorManager;
     private Sensor                mAccelSensor;
     private float                 gx, gy, gz;
 
-    public Accelerometer(Activity activity) {
+    public AccelSensor(Activity activity) {
         mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
         mAccelSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     }
