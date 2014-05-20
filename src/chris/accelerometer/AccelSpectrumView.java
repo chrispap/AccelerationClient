@@ -17,8 +17,8 @@ public class AccelSpectrumView extends View implements AccelListener {
 
     /* Spectrum Calculation */
     private long         mT       = 0;
-    private long         mDT      = 5;
-    private int          mFFTSize = 128;
+    private long         mDT      = 10;
+    private int          mFFTSize = 64;
     private double[]     mBufAccel, mBufFFT, mBufSpectrum;
     private DoubleFFT_1D mFFT;
 
