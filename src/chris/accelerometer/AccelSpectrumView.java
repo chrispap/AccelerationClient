@@ -6,29 +6,29 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
-import edu.emory.mathcs.jtransforms.fft.FloatFFT_1D;
+import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 
 public class AccelSpectrumView extends View implements AccelListener {
 
-    /* For Drawing */
-    private float       mWidth, mHeight;
-    private Paint       mPaint;
-    private float[]     mSpectrumLines;
+    /* Drawing */
+    private double       mWidth, mHeight;
+    private Paint        mPaint;
+    private float[]      mSpectrumLines;
 
-    /* For Spectrum Calculation */
-    private long        mDT      = 12 * 1000 * 1000;
-    private long        mLastSampleTime;
-    private int         mFFTSize = 80;
-    private float[]     mBufAccel, mBufFFT, mBufSpectrum;
-    private FloatFFT_1D mFFT;
+    /* Spectrum Calculation */
+    private long         mT       = 0;
+    private long         mDT      = 5;
+    private int          mFFTSize = 128;
+    private double[]     mBufAccel, mBufFFT, mBufSpectrum;
+    private DoubleFFT_1D mFFT;
 
     private void allocBuffers() {
-        mBufAccel = new float[mFFTSize];
-        mBufFFT = new float[mFFTSize];
-        mBufSpectrum = new float[mFFTSize / 2];
-        mSpectrumLines = new float[mFFTSize * 2];
-        mFFT = new FloatFFT_1D(mFFTSize);
+        mBufAccel = new double[mFFTSize];
+        mBufFFT = new double[mFFTSize];
+        mBufSpectrum = new double[mFFTSize / 2];
+        mFFT = new DoubleFFT_1D(mFFTSize);
 
+        mSpectrumLines = new float[mFFTSize * 2];
     }
 
     private void init() {
@@ -88,33 +88,32 @@ public class AccelSpectrumView extends View implements AccelListener {
     /* Drawing */
     private void updateSpectrumLines() {
         for (int i = 0; i < mFFTSize / 2; i++) {
-            float x = (mWidth / (mFFTSize / 2)) * (i + 0.5f);
-            float y = mHeight / 1000 * 8 * mBufSpectrum[i];
+            double x = (mWidth / (mFFTSize / 2)) * (i + 0.5f);
+            double y = mHeight / 800.0 * 5.0 * mBufSpectrum[i];
 
-            mSpectrumLines[(i << 2) + 0] = x;
-            mSpectrumLines[(i << 2) + 1] = mHeight;
-            mSpectrumLines[(i << 2) + 2] = x;
-            mSpectrumLines[(i << 2) + 3] = mHeight - y;
+            mSpectrumLines[(i << 2) + 0] = (float) x;
+            mSpectrumLines[(i << 2) + 1] = (float) mHeight;
+            mSpectrumLines[(i << 2) + 2] = (float) x;
+            mSpectrumLines[(i << 2) + 3] = (float) (mHeight - y);
         }
     }
 
     /* Callbacks */
     public void onAccelChanged(float gx, float gy, float gz) {
-        /* Avoid time interval inconsistencies */
-        long now = System.nanoTime();
-        int dN = (int) ((now - mLastSampleTime) / mDT);
+        /* Enforce regular intervals */
+        int dN = (int) ((System.nanoTime() - mT * 1000000L) / (mDT * 1000000L));
         if (dN == 0) return;
-        mLastSampleTime = mLastSampleTime + dN * mDT;
+        mT += (dN * mDT);
 
         /* Shift up the old acceleration values 
          * and store the new one */
         for (int i = 0; i < mFFTSize - dN; i++)
             mBufAccel[i] = mBufAccel[i + dN];
-        mBufAccel[mFFTSize - 1] = (float) Math.sqrt(gx * gx + gy * gy + gz * gz);
+        mBufAccel[mFFTSize - 1] = (float) Math.sqrt((gx * gx) + (gy * gy) + (gz * gz));
 
         /* Interpolate missed samples */
         if (dN < mFFTSize) {
-            float dA = (mBufAccel[mFFTSize - 1] - mBufAccel[mFFTSize - dN - 1]) / dN;
+            double dA = (mBufAccel[mFFTSize - 1] - mBufAccel[mFFTSize - dN - 1]) / dN;
             for (int i = 0; i < dN - 1; i++)
                 mBufAccel[mFFTSize - dN + i] = mBufAccel[mFFTSize - dN - 1] + dA * (i + 1);
         }
@@ -125,9 +124,9 @@ public class AccelSpectrumView extends View implements AccelListener {
         mFFT.realForward(mBufFFT);
 
         for (int i = 0; i < mFFTSize / 2; i++) {
-            final float aRe = mBufFFT[(i << 1)];
-            final float aIm = mBufFFT[(i << 1) + 1];
-            final float a = (float) Math.sqrt(aRe * aRe + aIm * aIm);
+            final double aRe = mBufFFT[(i << 1)];
+            final double aIm = mBufFFT[(i << 1) + 1];
+            final double a = Math.sqrt(aRe * aRe + aIm * aIm);
             mBufSpectrum[i] = a;
         }
 
@@ -136,4 +135,5 @@ public class AccelSpectrumView extends View implements AccelListener {
         updateSpectrumLines();
         invalidate();
     }
+
 }
