@@ -8,16 +8,17 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class AccelActivity extends Activity implements AccelerometerListener {
+public class AccelActivity extends Activity implements AccelListener {
 
-    boolean                  mRunning;
-    Button                   mBtnStartStop;
-    TextView                 mTxtEditIp;
-    AccelSensor            mAccelSensor;
-    AccelSender      mAccelSender;
+    boolean           mRunning;
+    Button            mBtnStartStop;
+    TextView          mTxtEditIp;
+    AccelSensor       mAccelSensor;
+    AccelSender       mAccelSender;
     AccelView         mAccelView;
     AccelSpectrumView mAccelSpectrumView;
 
+    /* Android */
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -68,9 +69,10 @@ public class AccelActivity extends Activity implements AccelerometerListener {
         mRunning = wasRunning;
     }
 
+    /* UI */
     private void start() {
         mAccelSensor.register(this);
-        mAccelSender.startSending();
+        //mAccelSender.startSending();
         mRunning = true;
     }
 
@@ -80,11 +82,12 @@ public class AccelActivity extends Activity implements AccelerometerListener {
         mRunning = false;
     }
 
+    /* Callbacks */
     @Override
-    public void onAccelerationChanged(float gx, float gy, float gz) {
-        mAccelView.onAccelerationChanged(gx, gy, gz);
-        mAccelSpectrumView.onAccelerationChanged(gx, gy, gz);
-        mAccelSender.onAccelerationChanged(gx, gy, gz);
+    public void onAccelChanged(float gx, float gy, float gz) {
+        mAccelView.onAccelChanged(gx, gy, gz);
+        mAccelSpectrumView.onAccelChanged(gx, gy, gz);
+        //mAccelSender.onAccelChanged(gx, gy, gz);
     }
 
 }

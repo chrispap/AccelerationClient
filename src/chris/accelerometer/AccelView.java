@@ -8,7 +8,7 @@ import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class AccelView extends View implements AccelerometerListener {
+public class AccelView extends View implements AccelListener {
 
     private int mWidth, mHeight, mSize;
     private PointF mMark, mCenter;
@@ -63,7 +63,7 @@ public class AccelView extends View implements AccelerometerListener {
     }
 
     @Override
-    public void onAccelerationChanged(float gx, float gy, float gz) {
+    public void onAccelChanged(float gx, float gy, float gz) {
         mGx = gx;
         mGy = gy;
         mGz = gz;

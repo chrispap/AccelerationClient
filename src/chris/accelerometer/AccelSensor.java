@@ -9,17 +9,17 @@ import android.hardware.SensorManager;
 
 public class AccelSensor implements SensorEventListener {
 
-    private AccelerometerListener mListener;
-    private SensorManager         mSensorManager;
-    private Sensor                mAccelSensor;
-    private float                 gx, gy, gz;
+    private AccelListener mListener;
+    private SensorManager mSensorManager;
+    private Sensor        mAccelSensor;
+    private float         gx, gy, gz;
 
     public AccelSensor(Activity activity) {
         mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
         mAccelSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     }
 
-    public void register(AccelerometerListener interestedActivity) {
+    public void register(AccelListener interestedActivity) {
         mSensorManager.registerListener(this, mAccelSensor, SensorManager.SENSOR_DELAY_FASTEST);
         mListener = interestedActivity;
     }
@@ -38,13 +38,13 @@ public class AccelSensor implements SensorEventListener {
         gx = event.values[0];
         gy = event.values[1];
         gz = event.values[2];
-        this.mListener.onAccelerationChanged(gx, gy, gz);
+        this.mListener.onAccelChanged(gx, gy, gz);
     }
 
 }
 
-interface AccelerometerListener {
+interface AccelListener {
 
-    public void onAccelerationChanged(float x, float y, float z);
+    public void onAccelChanged(float x, float y, float z);
 
 }

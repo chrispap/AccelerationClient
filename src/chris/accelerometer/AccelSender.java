@@ -10,7 +10,7 @@ import java.util.Locale;
 
 import android.util.Log;
 
-public class AccelSender extends Thread implements AccelerometerListener {
+public class AccelSender extends Thread implements AccelListener {
 
     private final int      PORT     = 55888;
     private final int      BUF_SIZE = 32;
@@ -34,13 +34,12 @@ public class AccelSender extends Thread implements AccelerometerListener {
     private boolean resolveHost() {
         if (!mHostResolved) {
             try {
-                Log.println(Log.INFO, "Sender", "Trying to init UDP Packet");
                 mSocket = new DatagramSocket();
                 mHostAddress = InetAddress.getByName(mHostIP);
             } catch (SocketException exc) {
-                Log.println(Log.ERROR, "Sender", exc.getMessage());
+                Log.e("accel.sender", exc.getMessage());
             } catch (UnknownHostException exc) {
-                Log.println(Log.ERROR, "Sender", exc.getMessage());
+                Log.e("accel.sender", exc.getMessage());
             }
             mHostResolved = true;
         }
@@ -63,10 +62,8 @@ public class AccelSender extends Thread implements AccelerometerListener {
         if (mSocket != null && mPacket != null)
             try {
                 mSocket.send(mPacket);
-                Log.println(Log.INFO, "Sender",
-                    "Sent data to ip: " + mPacket.getAddress().toString() + ":" + mPacket.getPort());
             } catch (IOException exc) {
-                Log.println(Log.ERROR, "Sender", exc.getMessage());
+                Log.e("accel.sender", exc.getMessage());
             }
     }
 
@@ -112,7 +109,7 @@ public class AccelSender extends Thread implements AccelerometerListener {
     }
 
     @Override
-    public void onAccelerationChanged(float gx, float gy, float gz) {
+    public void onAccelChanged(float gx, float gy, float gz) {
         putDataToBuffer(String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz));
     }
 
