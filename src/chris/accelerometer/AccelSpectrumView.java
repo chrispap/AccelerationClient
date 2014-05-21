@@ -4,36 +4,22 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Paint.Align;
 import android.util.AttributeSet;
 import android.view.View;
-import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 
-public class AccelSpectrumView extends View implements AccelListener {
+public class AccelSpectrumView extends View {
 
     /* Drawing */
-    private double       mWidth, mHeight;
-    private Paint        mPaint;
-    private float[]      mSpectrumLines;
-
-    /* Spectrum Calculation */
-    private long         mT       = 0;
-    private long         mDT      = 10;
-    private int          mFFTSize = 64;
-    private double[]     mBufAccel, mBufFFT, mBufSpectrum;
-    private DoubleFFT_1D mFFT;
-
-    private void allocBuffers() {
-        mBufAccel = new double[mFFTSize];
-        mBufFFT = new double[mFFTSize];
-        mBufSpectrum = new double[mFFTSize / 2];
-        mFFT = new DoubleFFT_1D(mFFTSize);
-
-        mSpectrumLines = new float[mFFTSize * 2];
-    }
+    private float   mWidth, mHeight;
+    private float[] mSpectrumLines;
+    private int     mSignalPower;
+    private long    mTimeLastUpdate;
+    private Paint   mPaint;
 
     private void init() {
-        allocBuffers();
         mPaint = new Paint();
+        mSpectrumLines = new float[0];
     }
 
     /* 3 Constructors */
@@ -65,6 +51,12 @@ public class AccelSpectrumView extends View implements AccelListener {
     public void onDraw(Canvas c) {
         super.onDraw(c);
 
+        /*Draw numerical indication of signal instant power*/
+        mPaint.setTextSize(150);
+        mPaint.setColor(Color.GRAY);
+        mPaint.setTextAlign(Align.RIGHT);
+        c.drawText("" + mSignalPower, mWidth - 40, 150, mPaint);
+
         /* Draw one vertical line at each frequency */
         mPaint.setColor(Color.GRAY);
         mPaint.setStrokeWidth(2);
@@ -74,7 +66,7 @@ public class AccelSpectrumView extends View implements AccelListener {
          *  to create the spectrum curve*/
         mPaint.setColor(Color.RED);
         mPaint.setStrokeWidth(4);
-        for (int i = 0; i < mFFTSize / 2 - 1; i++) {
+        for (int i = 0; i < mSpectrumLines.length / 4 - 1; i++) {
             c.drawLine(
                 mSpectrumLines[(i << 2) + 2],
                 mSpectrumLines[(i << 2) + 3],
@@ -86,53 +78,31 @@ public class AccelSpectrumView extends View implements AccelListener {
     }
 
     /* Drawing */
-    private void updateSpectrumLines() {
-        for (int i = 0; i < mFFTSize / 2; i++) {
-            double x = (mWidth / (mFFTSize / 2)) * (i + 0.5f);
-            double y = mHeight / 800.0 * 5.0 * mBufSpectrum[i];
+    public void updateSpectrum(double[] spectrumBuf) {
+        if (mSpectrumLines.length != spectrumBuf.length)
+            mSpectrumLines = new float[spectrumBuf.length * 4];
+
+        double power = 0;
+
+        for (int i = 0; i < spectrumBuf.length; i++) {
+            power += spectrumBuf[i];
+
+            double x = (mWidth / spectrumBuf.length) * (i + 0.5f);
+            double y = mHeight / 800.0 * 5.0 * spectrumBuf[i];
 
             mSpectrumLines[(i << 2) + 0] = (float) x;
             mSpectrumLines[(i << 2) + 1] = (float) mHeight;
             mSpectrumLines[(i << 2) + 2] = (float) x;
             mSpectrumLines[(i << 2) + 3] = (float) (mHeight - y);
         }
-    }
 
-    /* Callbacks */
-    public void onAccelChanged(float gx, float gy, float gz) {
-        /* Enforce regular intervals */
-        int dN = (int) ((System.nanoTime() - mT * 1000000L) / (mDT * 1000000L));
-        if (dN == 0) return;
-        mT += (dN * mDT);
-
-        /* Shift up the old acceleration values 
-         * and store the new one */
-        for (int i = 0; i < mFFTSize - dN; i++)
-            mBufAccel[i] = mBufAccel[i + dN];
-        mBufAccel[mFFTSize - 1] = (float) Math.sqrt((gx * gx) + (gy * gy) + (gz * gz));
-
-        /* Interpolate missed samples */
-        if (dN < mFFTSize) {
-            double dA = (mBufAccel[mFFTSize - 1] - mBufAccel[mFFTSize - dN - 1]) / dN;
-            for (int i = 0; i < dN - 1; i++)
-                mBufAccel[mFFTSize - dN + i] = mBufAccel[mFFTSize - dN - 1] + dA * (i + 1);
+        long now = System.currentTimeMillis();
+        long dt = now - mTimeLastUpdate;
+        if (dt > 200) {
+            mSignalPower = (int) power;
+            mTimeLastUpdate = now;
         }
 
-        /* Perform FFT and update Spectrum */
-        for (int i = 0; i < mFFTSize; i++)
-            mBufFFT[i] = mBufAccel[i];
-        mFFT.realForward(mBufFFT);
-
-        for (int i = 0; i < mFFTSize / 2; i++) {
-            final double aRe = mBufFFT[(i << 1)];
-            final double aIm = mBufFFT[(i << 1) + 1];
-            final double a = Math.sqrt(aRe * aRe + aIm * aIm);
-            mBufSpectrum[i] = a;
-        }
-
-        mBufSpectrum[0] = 0; //Depress DC component.
-
-        updateSpectrumLines();
         invalidate();
     }
 

@@ -10,10 +10,10 @@ import android.view.View;
 
 public class AccelView extends View implements AccelListener {
 
-    private int mWidth, mHeight, mSize;
+    private float mAx, mAy;
+    private int   mWidth, mHeight, mSize;
     private PointF mMark, mCenter;
     private Paint  mPaint;
-    float          mGx, mGy, mGz;
 
     private void init() {
         mMark = new PointF();
@@ -53,8 +53,8 @@ public class AccelView extends View implements AccelListener {
         super.onDraw(c);
         mPaint.setColor(Color.RED);
 
-        mMark.x = mWidth / 2 - (int) (mGx * mWidth * 0.1) / 2;
-        mMark.y = mHeight / 2 + (int) (mGy * mHeight * 0.1) / 2;
+        mMark.x = mWidth / 2 - (int) (mAx * mWidth * 0.1) / 2;
+        mMark.y = mHeight / 2 + (int) (mAy * mHeight * 0.1) / 2;
 
         c.drawCircle(mMark.x, mMark.y, 10, mPaint);
 
@@ -63,10 +63,9 @@ public class AccelView extends View implements AccelListener {
     }
 
     @Override
-    public void onAccelChanged(float gx, float gy, float gz) {
-        mGx = gx;
-        mGy = gy;
-        mGz = gz;
+    public void onAccelChanged(float ax, float ay, float az) {
+        mAx = ax;
+        mAy = ay;
         invalidate();
     }
 

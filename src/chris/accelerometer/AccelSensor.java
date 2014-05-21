@@ -12,7 +12,7 @@ public class AccelSensor implements SensorEventListener {
     private AccelListener mListener;
     private SensorManager mSensorManager;
     private Sensor        mAccelSensor;
-    private float         gx, gy, gz;
+    private float         ax, ay, az;
 
     public AccelSensor(Activity activity) {
         mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
@@ -35,10 +35,10 @@ public class AccelSensor implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        gx = event.values[0];
-        gy = event.values[1];
-        gz = event.values[2];
-        this.mListener.onAccelChanged(gx, gy, gz);
+        ax = event.values[0];
+        ay = event.values[1];
+        az = event.values[2];
+        this.mListener.onAccelChanged(ax, ay, az);
     }
 
 }
