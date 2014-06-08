@@ -1,12 +1,6 @@
 package chris.accelerometer;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
-import java.util.Map;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -21,22 +15,21 @@ import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 
 public class AccelActivity extends Activity implements AccelListener {
 
-    private final String      USER_AGENT = "Mozilla/5.0";
-    private final String      SERVER_URL = "http://test.papapaulou.gr/tremor_data_insert";
+    public static final String SERVER_URL = "http://test.papapaulou.gr/tremor_data_insert";
 
-    private boolean           mRunning;
-    private Button            mBtnStartStop;
-    private AccelSensor       mAccelSensor;
-    private AccelSender       mAccelSender;
-    private AccelView         mAccelView;
-    private AccelSpectrumView mAccelSpectrumView;
+    private boolean            mRunning;
+    private Button             mBtnStartStop;
+    private AccelSensor        mAccelSensor;
+    private AccelSender        mAccelSender;
+    private AccelView          mAccelView;
+    private AccelSpectrumView  mAccelSpectrumView;
 
     /* Spectrum Calculation */
-    private long              mT         = 0;
-    private long              mDT        = 10;
-    private int               mFFTSize   = 64;
-    private double[]          mBufAccel, mBufFFT, mBufSpectrum;
-    private DoubleFFT_1D      mFFT;
+    private long               mT         = 0;
+    private long               mDT        = 10;
+    private int                mFFTSize   = 64;
+    private double[]           mBufAccel, mBufFFT, mBufSpectrum;
+    private DoubleFFT_1D       mFFT;
 
     private void allocBuffers() {
         mBufAccel = new double[mFFTSize];
@@ -108,14 +101,13 @@ public class AccelActivity extends Activity implements AccelListener {
             values.put("tremor_data", "1,2,3,4,5,6");
 
             try {
-                sendPost(values);
+                //AccelSender.sendPost(values, SERVER_URL);
                 Log.i("accel.send", "+++");
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
         }
-
 
         return true;
     }
@@ -175,45 +167,6 @@ public class AccelActivity extends Activity implements AccelListener {
         }
 
         mBufSpectrum[0] = 0; //Depress DC component.
-    }
-
-    /* Net */
-    private int sendPost(Map<String, String> dataMap) throws Exception {
-
-        URL obj = new URL(SERVER_URL);
-        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-
-        /* Add reuqest header */
-        con.setRequestMethod("POST");
-        con.setRequestProperty("User-Agent", USER_AGENT);
-        con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
-
-        /* Construct the post data */
-        StringBuffer post_data = new StringBuffer();
-        for (Map.Entry<String, String> entry : dataMap.entrySet())
-            post_data.append(entry.getKey() + "=" + entry.getValue() + "&");
-        if (post_data.length() > 0) post_data.setLength(post_data.length() - 1);
-
-        /* Send post request */
-        con.setDoOutput(true);
-        DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-        wr.writeBytes(post_data.toString());
-        wr.flush();
-        wr.close();
-
-        int responseCode = con.getResponseCode();
-
-        BufferedReader in = new BufferedReader(
-            new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuffer response = new StringBuffer();
-
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-
-        return responseCode;
     }
 
 }
