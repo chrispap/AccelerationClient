@@ -72,7 +72,7 @@ public class AccelActivity extends Activity implements AccelListener {
         allocBuffers();
         mAccelSensor = new AccelSensor(this);
         mAccelSender = new AccelSender("IP");
-        mRunning = true;
+        mRunning = false;
     }
 
     protected void onResume() {
@@ -86,7 +86,7 @@ public class AccelActivity extends Activity implements AccelListener {
     protected void onPause() {
         super.onPause();
         boolean wasRunning = mRunning;
-        stop();
+        if (mRunning) stop();
         mRunning = wasRunning;
     }
 
@@ -96,15 +96,12 @@ public class AccelActivity extends Activity implements AccelListener {
 
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
-            HashMap<String, String> values = new HashMap<String, String>();
-            values.put("name", "Chris");
-            values.put("tremor_data", "1,2,3,4,5,6");
-
-            try {
-                //AccelSender.sendPost(values, SERVER_URL);
-                Log.i("accel.send", "+++");
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (mRunning) {
+                stop();
+                storeDataLocally();
+            }
+            else {
+                start();
             }
 
         }
@@ -125,6 +122,26 @@ public class AccelActivity extends Activity implements AccelListener {
         mRunning = false;
     }
 
+    @SuppressWarnings("unused")
+    private void sendSomething() {
+        HashMap<String, String> values = new HashMap<String, String>();
+        values.put("name", "Chris");
+        values.put("tremor_data", "1,2,3,4,5,6");
+
+        try {
+            AccelSender.sendPost(values, SERVER_URL);
+            Log.i("accel.send", "+++");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void storeDataLocally() {
+        if (!Utils.isExternalStorageWritable()) return;
+        Utils.writeToSDFile(mBufAccel, "data.txt");
+    }
+
     /* Callbacks */
     @Override
     public void onAccelChanged(float ax, float ay, float az) {
@@ -141,7 +158,7 @@ public class AccelActivity extends Activity implements AccelListener {
         if (dN == 0) return;
         mT += (dN * mDT);
 
-        /* Shift up the old acceleration values 
+        /* Shift up the old acceleration values
          * and store the new one */
         for (int i = 0; i < mFFTSize - dN; i++)
             mBufAccel[i] = mBufAccel[i + dN];

@@ -121,7 +121,7 @@ public class AccelSender extends Thread implements AccelListener {
         putDataToBuffer(String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz));
     }
 
-    public static int sendPost(Map<String, String> dataMap, String urlStr) throws Exception {
+    static int sendPost(Map<String, String> dataMap, String urlStr) throws Exception {
 
         URL obj = new URL(urlStr);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
