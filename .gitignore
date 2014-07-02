@@ -1,3 +1,11 @@
+# built application files
+*.apk
+*.ap_
+
+# files for the dex VM
+*.dex
+
+# Java class files
 *.class
 
 # Package Files #
@@ -5,5 +13,26 @@
 *.war
 *.ear
 
+# generated files
+bin/
+gen/
 bin/
 .settings/
+
+lint.xml
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Eclipse project files
+.classpath
+.project
+.settings
+
+#Windows bullshit
+Thumbs.db
+
+trash
+9patches
+
+misc/
