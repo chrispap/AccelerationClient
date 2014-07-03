@@ -121,8 +121,7 @@ public class AccelSender extends Thread implements AccelListener {
         putDataToBuffer(String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz));
     }
 
-    static int sendPost(Map<String, String> dataMap, String urlStr) throws Exception {
-
+    static int sendPost(String postData, String urlStr) throws Exception {
         URL obj = new URL(urlStr);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
@@ -131,23 +130,16 @@ public class AccelSender extends Thread implements AccelListener {
         con.setRequestProperty("User-Agent", USER_AGENT);
         con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 
-        /* Construct the post data */
-        StringBuffer post_data = new StringBuffer();
-        for (Map.Entry<String, String> entry : dataMap.entrySet())
-            post_data.append(entry.getKey() + "=" + entry.getValue() + "&");
-        if (post_data.length() > 0) post_data.setLength(post_data.length() - 1);
-
         /* Send post request */
         con.setDoOutput(true);
         DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-        wr.writeBytes(post_data.toString());
+        wr.writeBytes("data=" + postData);
         wr.flush();
         wr.close();
 
         int responseCode = con.getResponseCode();
 
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(con.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
         String inputLine;
         StringBuffer response = new StringBuffer();
 
@@ -157,6 +149,16 @@ public class AccelSender extends Thread implements AccelListener {
         in.close();
 
         return responseCode;
+    }
+    
+    static int sendPost(Map<String, String> dataMap, String urlStr) throws Exception {
+        /* Construct the post data */
+        StringBuffer post_data = new StringBuffer();
+        for (Map.Entry<String, String> entry : dataMap.entrySet())
+            post_data.append(entry.getKey() + "=" + entry.getValue() + "&");
+        if (post_data.length() > 0) post_data.setLength(post_data.length() - 1);
+        
+        return sendPost(post_data.toString(), urlStr);
     }
 
 }

@@ -5,20 +5,20 @@ import java.util.HashMap;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.Button;
+import android.widget.Chronometer;
 import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 
 public class AccelActivity extends Activity implements AccelListener {
 
-    public static final String SERVER_URL = "http://test.papapaulou.gr/tremor_data_insert";
+    public static final String SERVER_URL = "http://upat.notremor.eu/tremor_data_insert";
+    public static final String LOGTAG = "accel";
 
     private boolean            mRunning;
-    private Button             mBtnStartStop;
+    private Chronometer        mChronometer;
     private AccelSensor        mAccelSensor;
     private AccelSender        mAccelSender;
     private AccelView          mAccelView;
@@ -27,7 +27,7 @@ public class AccelActivity extends Activity implements AccelListener {
     /* Spectrum Calculation */
     private long               mT         = 0;
     private long               mDT        = 10;
-    private int                mFFTSize   = 64;
+    private int                mFFTSize   = 1000;
     private double[]           mBufAccel, mBufFFT, mBufSpectrum;
     private DoubleFFT_1D       mFFT;
 
@@ -51,40 +51,28 @@ public class AccelActivity extends Activity implements AccelListener {
         }
 
         /* Find views and set listeners. */
-        mAccelView = (AccelView) (findViewById(R.id.view_accel));
-        mAccelSpectrumView = (AccelSpectrumView) (findViewById(R.id.view_spectrum));
-        mBtnStartStop = (Button) findViewById(R.id.btn_start_stop);
-        mBtnStartStop.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View arg0) {
-                if (mRunning) {
-                    stop();
-                    mBtnStartStop.setText(R.string.label_start);
-                }
-                else {
-                    start();
-                    mBtnStartStop.setText(R.string.label_stop);
-                }
-            }
-        });
-
-        /* */
+        mAccelView = (AccelView) findViewById(R.id.view_accel);
+        mAccelSpectrumView = (AccelSpectrumView) findViewById(R.id.view_spectrum);
+        mChronometer = (Chronometer) findViewById(R.id.chronometer);
+        
+        /*-*/
         allocBuffers();
         mAccelSensor = new AccelSensor(this);
         mAccelSender = new AccelSender("IP");
-        mRunning = true;
+        mRunning = false;
     }
 
     protected void onResume() {
         super.onResume();
+        mAccelSensor.register(this);
         if (mRunning) {
             start();
-            mBtnStartStop.setText(R.string.label_stop);
         }
     }
 
     protected void onPause() {
         super.onPause();
+        mAccelSensor.unregister();
         boolean wasRunning = mRunning;
         if (mRunning) stop();
         mRunning = wasRunning;
@@ -97,10 +85,20 @@ public class AccelActivity extends Activity implements AccelListener {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
 
             if (mRunning) {
+                Log.i(LOGTAG, "Stopped");
+
+                mChronometer.stop();
+                
                 stop();
                 // storeDataLocally();
+                sendSomething();
             }
             else {
+                Log.i(LOGTAG, "Started");
+                
+                mChronometer.setBase(SystemClock.elapsedRealtime());
+                mChronometer.start();
+                
                 start();
             }
 
@@ -111,28 +109,28 @@ public class AccelActivity extends Activity implements AccelListener {
 
     /* UI */
     private void start() {
-        mAccelSensor.register(this);
         // mAccelSender.startSending();
         mRunning = true;
     }
 
     private void stop() {
-        mAccelSensor.unregister();
         mAccelSender.stopSending();
         mRunning = false;
     }
 
-    @SuppressWarnings("unused")
     private void sendSomething() {
         HashMap<String, String> values = new HashMap<String, String>();
-        values.put("name", "Chris");
-        values.put("tremor_data", "1,2,3,4,5,6");
+
+        StringBuffer sbuf = new StringBuffer();
+        for (int i = 0; i < mFFTSize; i++) {
+            sbuf.append(mBufAccel[i]).append('\n');
+        }
 
         try {
-            AccelSender.sendPost(values, SERVER_URL);
-            Log.i("accel.send", "+++");
-        } catch (Exception e) {
-            e.printStackTrace();
+            AccelSender.sendPost(sbuf.toString(), SERVER_URL);
+            Log.i(LOGTAG+".send", "Sent " +sbuf.length()+" characters");
+        } catch (Exception exc) {
+            Log.e(LOGTAG+".send", exc.getMessage());
         }
 
     }
@@ -148,7 +146,6 @@ public class AccelActivity extends Activity implements AccelListener {
         addAccelVal(ax, ay, az);
         mAccelView.onAccelChanged(ax, ay, az);
         mAccelSpectrumView.updateSpectrum(mBufSpectrum);
-
         // mAccelSender.onAccelChanged(gx, gy, gz);
     }
 
@@ -172,19 +169,19 @@ public class AccelActivity extends Activity implements AccelListener {
                 mBufAccel[mFFTSize - dN + i] = mBufAccel[mFFTSize - dN - 1] + dA * (i + 1);
         }
 
-        /* Perform FFT and update Spectrum */
-        for (int i = 0; i < mFFTSize; i++)
-            mBufFFT[i] = mBufAccel[i];
-        mFFT.realForward(mBufFFT);
-
-        for (int i = 0; i < mFFTSize / 2; i++) {
-            final double aRe = mBufFFT[(i << 1)];
-            final double aIm = mBufFFT[(i << 1) + 1];
-            final double a = Math.sqrt(aRe * aRe + aIm * aIm);
-            mBufSpectrum[i] = a;
-        }
-
-        mBufSpectrum[0] = 0; // Depress DC component.
+//        /* Perform FFT and update Spectrum */
+//        for (int i = 0; i < mFFTSize; i++)
+//            mBufFFT[i] = mBufAccel[i];
+//        mFFT.realForward(mBufFFT);
+//
+//        for (int i = 0; i < mFFTSize / 2; i++) {
+//            final double aRe = mBufFFT[(i << 1)];
+//            final double aIm = mBufFFT[(i << 1) + 1];
+//            final double a = Math.sqrt(aRe * aRe + aIm * aIm);
+//            mBufSpectrum[i] = a;
+//        }
+//
+//        mBufSpectrum[0] = 0; // Depress DC component.
     }
 
 }

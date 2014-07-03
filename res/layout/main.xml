@@ -17,16 +17,8 @@
         android:layout_width="match_parent"
         android:layout_height="50dp" >
 
-        <Button
-            android:id="@+id/btn_start_stop"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_alignParentLeft="true"
-            android:text="@string/label_start"
-            android:visibility="invisible" />
-
         <Chronometer
-            android:id="@+id/chronometer1"
+            android:id="@+id/chronometer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
