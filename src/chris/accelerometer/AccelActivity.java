@@ -14,7 +14,7 @@ public class AccelActivity extends Activity implements AccelListener {
 
     public static final String SERVER_URL = "http://upat.notremor.eu/tremor_data_insert";
     public static final String LOGTAG     = "accel";
-    public static final int    FFT_SIZE   = 1000;
+    public static final int    FFT_SIZE   = 2000;
     public static final int    DT         = 10;
 
     /* UI */
@@ -25,6 +25,7 @@ public class AccelActivity extends Activity implements AccelListener {
     private AccelSpectrumView  mAccelSpectrumView;
 
     /* Spectrum Calculation */
+    private int                mCount;
     private double             mTime;
     private double[]           mBuf_Time;
     private double[]           mBuf_AccelX;
@@ -101,13 +102,23 @@ public class AccelActivity extends Activity implements AccelListener {
     }
 
     private void startMeasurement() {
+        for (int i = 0; i < FFT_SIZE; i++) {
+            mBuf_AccelX[i] = -1;
+            mBuf_AccelY[i] = -1;
+            mBuf_AccelZ[i] = -1;
+            mBuf_Time[i] = -1;
+        }
+
+        mAccelView.setBackgroundResource(R.color.Olive);
         mChronometer.setBase(SystemClock.elapsedRealtime());
         mChronometer.start();
+        mCount = 0;
         mRunning = true;
     }
 
     private void stopMeasurement() {
         mChronometer.stop();
+        mAccelView.setBackgroundResource(R.color.mainSurfaceBgColor);
         mRunning = false;
     }
 
@@ -146,13 +157,19 @@ public class AccelActivity extends Activity implements AccelListener {
     public void onAccelChanged(float ax, float ay, float az) {
         if (!mRunning) return;
 
+        if (mCount >= FFT_SIZE) {
+            mAccelView.setBackgroundResource(R.color.RosyBrown);
+            return;
+        }
+
+        mCount++;
         addAccelVal(ax, ay, az);
         mAccelView.onAccelChanged(ax, ay, az);
         mAccelSpectrumView.updateSpectrum(mBuf_Spectrum);
     }
 
     private void addAccelVal(float ax, float ay, float az) {
-        mTime = SystemClock.elapsedRealtime() / 1000.0;
+        mTime = (double) SystemClock.elapsedRealtime() / 1000.0;
 
         // Shift up old acceleration values ...
         for (int i = 0; i < FFT_SIZE - 1; i++) {

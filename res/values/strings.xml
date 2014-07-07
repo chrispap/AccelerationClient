@@ -2,9 +2,6 @@
 <resources>
 
     <string name="app_name">NoTremor app </string>
-
-    <color name="mainSurfaceBgColor">#202020</color>
-
     <string name="defaultIP">150.140.187.221</string>
     <string name="label_start">START</string>
     <string name="label_stop">STOP</string>
