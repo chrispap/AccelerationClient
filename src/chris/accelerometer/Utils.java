@@ -22,32 +22,36 @@ public class Utils {
         return false;
     }
 
-    public static boolean writeToSDFile(double[] data, String filename) {
+    public static boolean writeToSDFile(String data, String filename, String extension) {
         // See http://developer.android.com/guide/topics/data/data-  storage.html#filesExternal
 
         File root = android.os.Environment.getExternalStorageDirectory();
         File dir = new File(root.getAbsolutePath() + "/" + DIR_NAME);
         dir.mkdirs();
-        File file = new File(dir, filename);
+
+        String flnm = filename + "." + extension;
+        File file = new File(dir, flnm);
+
+        int fi = 1;
+        while (file.exists()) {
+            flnm = filename + fi + "." + extension;
+            ++fi;
+            file = new File(dir, flnm);
+        }
 
         try {
             FileOutputStream f = new FileOutputStream(file);
             PrintWriter pw = new PrintWriter(f);
-
-            // Write data, one value at a line.
-            for (double d : data) {
-                pw.println(d);
-            }
-
+            pw.print(data);
             pw.flush();
             pw.close();
             f.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            Log.i(LOG_TAG, "File " + filename + " not found.");
+            Log.i(LOG_TAG, "File " + flnm + " not found.");
             return false;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException exc) {
+            exc.printStackTrace();
             return false;
         }
 
