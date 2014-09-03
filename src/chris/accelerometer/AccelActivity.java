@@ -12,9 +12,9 @@ import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 
 public class AccelActivity extends Activity implements AccelListener {
 
-    public static final String SERVER_URL = "http://upat.notremor.eu/tremor_data_insert";
+    public static final String SERVER_URL = "http://test.papapaulou.gr/tremor_data_insert";
     public static final String LOGTAG     = "accel";
-    public static final int    FFT_SIZE   = 2000;
+    public static final int    FFT_SIZE   = 5000;
     public static final int    DT         = 10;
 
     /* UI */
@@ -26,8 +26,8 @@ public class AccelActivity extends Activity implements AccelListener {
 
     /* Spectrum Calculation */
     private int                mCount;
-    private double             mTime;
-    private double[]           mBuf_Time;
+    private long               mTime;
+    private long[]             mBuf_Time;
     private double[]           mBuf_AccelX;
     private double[]           mBuf_AccelY;
     private double[]           mBuf_AccelZ;
@@ -35,7 +35,7 @@ public class AccelActivity extends Activity implements AccelListener {
     private DoubleFFT_1D       mFFT;
 
     private void allocBuffers() {
-        mBuf_Time = new double[FFT_SIZE];
+        mBuf_Time = new long[FFT_SIZE];
         mBuf_AccelX = new double[FFT_SIZE];
         mBuf_AccelY = new double[FFT_SIZE];
         mBuf_AccelZ = new double[FFT_SIZE];
@@ -118,25 +118,27 @@ public class AccelActivity extends Activity implements AccelListener {
 
     private void stopMeasurement() {
         mChronometer.stop();
-        mAccelView.setBackgroundResource(R.color.mainSurfaceBgColor);
+        mAccelView.setBackgroundResource(R.color.RosyBrown);
         mRunning = false;
     }
 
     private void onStopMeasurement() {
+        // Format data
         StringBuffer sbuf = new StringBuffer();
-
+        sbuf.append("time:ax:ay:az \n");
         for (int i = 0; i < FFT_SIZE; i++) {
-            sbuf.append(mBuf_Time[i] - mBuf_Time[0]).append('\t').
+            sbuf.append(mBuf_Time[i]/* - mBuf_Time[0]*/).append('\t').
                     append(mBuf_AccelX[i]).append('\t').
                     append(mBuf_AccelY[i]).append('\t').
                     append(mBuf_AccelZ[i]).append('\t').
                     append('\n');
         }
 
+        // Distribute data
         String data = sbuf.toString();
-
         storeDataLocally(data);
-        //sendDataToServer(data);
+        sendDataToServer(data);
+        mAccelView.setBackgroundResource(R.color.mainSurfaceBgColor);
     }
 
     private void sendDataToServer(String data) {
@@ -158,32 +160,38 @@ public class AccelActivity extends Activity implements AccelListener {
         if (!mRunning) return;
 
         if (mCount >= FFT_SIZE) {
-            mAccelView.setBackgroundResource(R.color.RosyBrown);
+            stopMeasurement();
+            onStopMeasurement();
             return;
         }
 
-        mCount++;
         addAccelVal(ax, ay, az);
-        mAccelView.onAccelChanged(ax, ay, az);
-        mAccelSpectrumView.updateSpectrum(mBuf_Spectrum);
+        mCount++;
+        //mAccelView.onAccelChanged(ax, ay, az);
+        //mAccelSpectrumView.updateSpectrum(mBuf_Spectrum);
     }
 
     private void addAccelVal(float ax, float ay, float az) {
-        mTime = (double) SystemClock.elapsedRealtime() / 1000.0;
+        mTime = System.currentTimeMillis();
 
+        mBuf_Time[mCount] = mTime;
+        mBuf_AccelX[mCount] = ax;
+        mBuf_AccelY[mCount] = ay;
+        mBuf_AccelZ[mCount] = az;
+        
         // Shift up old acceleration values ...
-        for (int i = 0; i < FFT_SIZE - 1; i++) {
+        /*for (int i = 0; i < FFT_SIZE - 1; i++) {
             mBuf_Time[i] = mBuf_Time[i + 1];
             mBuf_AccelX[i] = mBuf_AccelX[i + 1];
             mBuf_AccelY[i] = mBuf_AccelY[i + 1];
             mBuf_AccelZ[i] = mBuf_AccelZ[i + 1];
-        }
+        }*/
 
         // ... and store the new one
-        mBuf_Time[FFT_SIZE - 1] = mTime;
+        /*mBuf_Time[FFT_SIZE - 1] = mTime;
         mBuf_AccelX[FFT_SIZE - 1] = ax;
         mBuf_AccelY[FFT_SIZE - 1] = ay;
-        mBuf_AccelZ[FFT_SIZE - 1] = az;
+        mBuf_AccelZ[FFT_SIZE - 1] = az;*/
     }
 
 }
