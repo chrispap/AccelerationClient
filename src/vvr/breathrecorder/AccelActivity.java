@@ -1,5 +1,7 @@
 package vvr.breathrecorder;
 
+import java.util.Vector;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -10,38 +12,27 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Chronometer;
 import vvr.breathrecorder.sensors.AccelSensor;
+import vvr.breathrecorder.sensors.GyroSensor;
+import vvr.breathrecorder.sensors.SensorData;
 import vvr.breathrecorder.sensors.SensorListener;
 
 public class AccelActivity extends Activity implements SensorListener {
 
-    public static final String SERVER_URL = "http://upat.notremor.eu/tremor_data_insert";
-    public static final String LOGTAG     = "accel";
-    public static final int    FFT_SIZE   = 5000;
-    public static final int    DT         = 10;
+    public static final String SERVER_URL  = "http://upat.notremor.eu/tremor_data_insert";
+    public static final String LOGTAG      = "accel";
+    public static final int    BUFFER_SIZE = 5000;
 
     /* UI */
-    private boolean            mRunning;
-    private View               mLayoutTop;
-    private Chronometer        mChronometer;
-    private AccelSensor        mAccelSensor;
-    private SpectrumVisualizer mSpectrumViz;
+    private boolean     mRunning;
+    private View        mLayoutTop;
+    private Chronometer mChronometer;
+    private AccelSensor mAccelSensor;
+    private GyroSensor mGyroSensor;
 
     /* Spectrum Calculation */
-    private int      mCount;
-    private long     mTime;
-    private long[]   mBuf_Time;
-    private double[] mBuf_AccelX;
-    private double[] mBuf_AccelY;
-    private double[] mBuf_AccelZ;
-    private double[] mBuf_Spectrum;
-
-    private void allocBuffers() {
-        mBuf_Time = new long[FFT_SIZE];
-        mBuf_AccelX = new double[FFT_SIZE];
-        mBuf_AccelY = new double[FFT_SIZE];
-        mBuf_AccelZ = new double[FFT_SIZE];
-        mBuf_Spectrum = new double[FFT_SIZE / 2];
-    }
+    Vector<SensorData> mBuff_Accel;
+    Vector<SensorData> mBuff_Gyro;
+    long mt0;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,20 +46,22 @@ public class AccelActivity extends Activity implements SensorListener {
         }
 
         /* Find views and set listeners. */
-        mSpectrumViz = (SpectrumVisualizer) findViewById(R.id.view_spectrum);
         mChronometer = (Chronometer) findViewById(R.id.chronometer);
         mLayoutTop = findViewById(R.id.layout_top);
         mLayoutTop.setBackgroundResource(R.color.mainSurfaceBgColor);
 
-        /*-*/
-        allocBuffers();
+        /* Init */
+        mBuff_Accel = new Vector<SensorData>();
+        mBuff_Gyro = new Vector<SensorData>();
         mAccelSensor = new AccelSensor(this);
+        mGyroSensor = new GyroSensor(this);
         mRunning = false;
     }
 
     protected void onResume() {
         super.onResume();
         mAccelSensor.register(this);
+        mGyroSensor.register(this);
         if (mRunning) {
             startMeasurement();
         }
@@ -77,6 +70,7 @@ public class AccelActivity extends Activity implements SensorListener {
     protected void onPause() {
         super.onPause();
         mAccelSensor.unregister();
+        mGyroSensor.unregister();
         boolean wasRunning = mRunning;
         if (mRunning) stopMeasurement();
         mRunning = wasRunning;
@@ -102,17 +96,15 @@ public class AccelActivity extends Activity implements SensorListener {
     }
 
     private void startMeasurement() {
-        for (int i = 0; i < FFT_SIZE; i++) {
-            mBuf_AccelX[i] = -1;
-            mBuf_AccelY[i] = -1;
-            mBuf_AccelZ[i] = -1;
-            mBuf_Time[i] = -1;
-        }
+        // Clear buffers
+        mBuff_Accel.clear();
+        mBuff_Gyro.clear();
+        mt0 = SystemClock.elapsedRealtime();
 
+        // Set gui
         mLayoutTop.setBackgroundResource(R.color.lime);
         mChronometer.setBase(SystemClock.elapsedRealtime());
         mChronometer.start();
-        mCount = 0;
         mRunning = true;
     }
 
@@ -124,71 +116,80 @@ public class AccelActivity extends Activity implements SensorListener {
 
     private void onStopMeasurement() {
         // Format data
-        StringBuffer sbuf = new StringBuffer();
-        sbuf.append("time:ax:ay:az \n");
-        for (int i = 0; i < FFT_SIZE; i++) {
-            sbuf.append(mBuf_Time[i]/* - mBuf_Time[0]*/).append('\t').append(mBuf_AccelX[i]).append('\t')
-                .append(mBuf_AccelY[i]).append('\t').append(mBuf_AccelZ[i]).append('\t').append('\n');
+        StringBuffer sbuf;
+        String data;
+        
+        // Store accel data
+        sbuf = new StringBuffer();
+        for (final SensorData sd : mBuff_Accel) {
+            sbuf.append(sd.timeStamp).append('\t').
+            append(sd.x).append('\t').
+            append(sd.y).append('\t').
+            append(sd.z).append('\t').
+            append('\n');
         }
 
-        // Distribute data
-        String data = sbuf.toString();
-        storeDataLocally(data);
-        sendDataToServer(data);
+        data = sbuf.toString();
+        storeDataLocally(data, AccelSensor.TYPE, "txt");
+        sendDataToServer(data, AccelSensor.TYPE, "txt");
+
+        // Store gyro data
+        sbuf = new StringBuffer();
+        for (final SensorData sd : mBuff_Gyro) {
+            sbuf.append((float)(sd.timeStamp - mt0)/1000).append('\t').
+            append(sd.x).append('\t').
+            append(sd.y).append('\t').
+            append(sd.z).append('\t').
+            append('\n');
+        }
+
+        data = sbuf.toString();
+        storeDataLocally(data, GyroSensor.TYPE, "txt");
+        sendDataToServer(data, GyroSensor.TYPE, "txt");
+        
         mLayoutTop.setBackgroundResource(R.color.mainSurfaceBgColor);
     }
 
-    private void sendDataToServer(String data) {
+    private void sendDataToServer(String data, String filename, String extension) {
         try {
-            String filename = "acceleration.txt";
-            AccelSender.sendPost(data, SERVER_URL + "/" + filename);
+            AccelSender.sendPost(data, SERVER_URL + "/" + filename + "." + extension);
         } catch (Exception exc) {
             Log.e(LOGTAG + ".send", exc.getMessage());
         }
 
     }
 
-    private void storeDataLocally(String data) {
-        if (!Utils.isExternalStorageWritable()) return;
-        Utils.writeToSDFile(data, "data", "txt");
+    private void storeDataLocally(String data, String filename, String extension) {
+        if (!Utils.isExternalStorageWritable()){
+            Log.w(LOGTAG, "Cannot write to External Storage");
+            return;
+        }
+        Utils.writeToSDFile(data, filename, extension);
     }
 
     @Override
-    public void onValueChanged(String type, float ax, float ay, float az) {
-        if (!mRunning) return;
-
-        if (mCount >= FFT_SIZE) {
-            stopMeasurement();
-            onStopMeasurement();
+    public void onValueChanged(String type, float x, float y, float z) {
+        if (!mRunning)
             return;
+
+        // Create sensor data object
+        SensorData sd = new SensorData(x, y, z, SystemClock.elapsedRealtime());
+
+        // Pick appropriate buffer
+        Vector<SensorData> buf = null;
+        switch (type) {
+        case AccelSensor.TYPE:
+            buf = mBuff_Accel;
+            break;
+        case GyroSensor.TYPE:
+            buf = mBuff_Gyro;
+            break;
+        default:
+            break;
         }
 
-        addAccelVal(ax, ay, az);
-        mCount++;
-        mSpectrumViz.updateSpectrum(mBuf_Spectrum);
-    }
-
-    private void addAccelVal(float ax, float ay, float az) {
-        mTime = System.currentTimeMillis();
-
-        mBuf_Time[mCount] = mTime;
-        mBuf_AccelX[mCount] = ax;
-        mBuf_AccelY[mCount] = ay;
-        mBuf_AccelZ[mCount] = az;
-
-        // Shift up old acceleration values ...
-        for (int i = 0; i < FFT_SIZE - 1; i++) {
-            mBuf_Time[i] = mBuf_Time[i + 1];
-            mBuf_AccelX[i] = mBuf_AccelX[i + 1];
-            mBuf_AccelY[i] = mBuf_AccelY[i + 1];
-            mBuf_AccelZ[i] = mBuf_AccelZ[i + 1];
-        }
-
-        // ... and store the new one
-        mBuf_Time[FFT_SIZE - 1] = mTime;
-        mBuf_AccelX[FFT_SIZE - 1] = ax;
-        mBuf_AccelY[FFT_SIZE - 1] = ay;
-        mBuf_AccelZ[FFT_SIZE - 1] = az;
+        // Append new sensor measurement
+        buf.add(sd);
     }
 
 }
