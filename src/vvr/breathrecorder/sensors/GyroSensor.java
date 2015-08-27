@@ -13,7 +13,6 @@ public class GyroSensor implements SensorEventListener {
     private SensorListener     mListener;
     private SensorManager      mSensorManager;
     private Sensor             mGyroSensor;
-    private float              ax, ay, az;
 
     public GyroSensor(Activity activity) {
         mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
@@ -36,10 +35,10 @@ public class GyroSensor implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        ax = event.values[0];
-        ay = event.values[1];
-        az = event.values[2];
-        this.mListener.onValueChanged(TYPE, ax, ay, az);
+        this.mListener.onValueChanged(TYPE,
+            event.values[0],
+            event.values[1],
+            event.values[2]);
     }
 
 }

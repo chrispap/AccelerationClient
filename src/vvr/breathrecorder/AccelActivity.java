@@ -9,7 +9,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.Chronometer;
-import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
 import vvr.breathrecorder.sensors.AccelSensor;
 import vvr.breathrecorder.sensors.SensorListener;
 
@@ -28,14 +27,13 @@ public class AccelActivity extends Activity implements SensorListener {
     private SpectrumVisualizer mSpectrumViz;
 
     /* Spectrum Calculation */
-    private int          mCount;
-    private long         mTime;
-    private long[]       mBuf_Time;
-    private double[]     mBuf_AccelX;
-    private double[]     mBuf_AccelY;
-    private double[]     mBuf_AccelZ;
-    private double[]     mBuf_Spectrum;
-    private DoubleFFT_1D mFFT;
+    private int      mCount;
+    private long     mTime;
+    private long[]   mBuf_Time;
+    private double[] mBuf_AccelX;
+    private double[] mBuf_AccelY;
+    private double[] mBuf_AccelZ;
+    private double[] mBuf_Spectrum;
 
     private void allocBuffers() {
         mBuf_Time = new long[FFT_SIZE];
@@ -43,7 +41,6 @@ public class AccelActivity extends Activity implements SensorListener {
         mBuf_AccelY = new double[FFT_SIZE];
         mBuf_AccelZ = new double[FFT_SIZE];
         mBuf_Spectrum = new double[FFT_SIZE / 2];
-        mFFT = new DoubleFFT_1D(FFT_SIZE);
     }
 
     public void onCreate(Bundle savedInstanceState) {
@@ -61,6 +58,7 @@ public class AccelActivity extends Activity implements SensorListener {
         mSpectrumViz = (SpectrumVisualizer) findViewById(R.id.view_spectrum);
         mChronometer = (Chronometer) findViewById(R.id.chronometer);
         mLayoutTop = findViewById(R.id.layout_top);
+        mLayoutTop.setBackgroundResource(R.color.mainSurfaceBgColor);
 
         /*-*/
         allocBuffers();
@@ -91,10 +89,12 @@ public class AccelActivity extends Activity implements SensorListener {
         if (event.getAction() != MotionEvent.ACTION_DOWN)
             return true;
 
-        if (mRunning) { // OnStop
+        if (mRunning) // stop 
+        {
             stopMeasurement();
             onStopMeasurement();
-        } else { // OnStart
+        } else // start
+        {
             startMeasurement();
         }
 
