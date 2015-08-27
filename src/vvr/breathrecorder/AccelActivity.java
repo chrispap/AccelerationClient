@@ -1,4 +1,4 @@
-package chris.accelerometer;
+package vvr.breathrecorder;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -6,33 +6,36 @@ import android.os.StrictMode;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.Window;
 import android.widget.Chronometer;
 import edu.emory.mathcs.jtransforms.fft.DoubleFFT_1D;
+import vvr.breathrecorder.sensors.AccelSensor;
+import vvr.breathrecorder.sensors.SensorListener;
 
-public class AccelActivity extends Activity implements AccelListener {
+public class AccelActivity extends Activity implements SensorListener {
 
-    public static final String SERVER_URL = "http://test.papapaulou.gr/tremor_data_insert";
+    public static final String SERVER_URL = "http://upat.notremor.eu/tremor_data_insert";
     public static final String LOGTAG     = "accel";
     public static final int    FFT_SIZE   = 5000;
     public static final int    DT         = 10;
 
     /* UI */
     private boolean            mRunning;
+    private View               mLayoutTop;
     private Chronometer        mChronometer;
     private AccelSensor        mAccelSensor;
-    private AccelView          mAccelView;
-    private AccelSpectrumView  mAccelSpectrumView;
+    private SpectrumVisualizer mSpectrumViz;
 
     /* Spectrum Calculation */
-    private int                mCount;
-    private long               mTime;
-    private long[]             mBuf_Time;
-    private double[]           mBuf_AccelX;
-    private double[]           mBuf_AccelY;
-    private double[]           mBuf_AccelZ;
-    private double[]           mBuf_Spectrum;
-    private DoubleFFT_1D       mFFT;
+    private int          mCount;
+    private long         mTime;
+    private long[]       mBuf_Time;
+    private double[]     mBuf_AccelX;
+    private double[]     mBuf_AccelY;
+    private double[]     mBuf_AccelZ;
+    private double[]     mBuf_Spectrum;
+    private DoubleFFT_1D mFFT;
 
     private void allocBuffers() {
         mBuf_Time = new long[FFT_SIZE];
@@ -55,9 +58,9 @@ public class AccelActivity extends Activity implements AccelListener {
         }
 
         /* Find views and set listeners. */
-        mAccelView = (AccelView) findViewById(R.id.view_accel);
-        mAccelSpectrumView = (AccelSpectrumView) findViewById(R.id.view_spectrum);
+        mSpectrumViz = (SpectrumVisualizer) findViewById(R.id.view_spectrum);
         mChronometer = (Chronometer) findViewById(R.id.chronometer);
+        mLayoutTop = findViewById(R.id.layout_top);
 
         /*-*/
         allocBuffers();
@@ -88,13 +91,10 @@ public class AccelActivity extends Activity implements AccelListener {
         if (event.getAction() != MotionEvent.ACTION_DOWN)
             return true;
 
-        if (mRunning)
-        { // OnStop
+        if (mRunning) { // OnStop
             stopMeasurement();
             onStopMeasurement();
-        }
-        else
-        { // OnStart
+        } else { // OnStart
             startMeasurement();
         }
 
@@ -109,7 +109,7 @@ public class AccelActivity extends Activity implements AccelListener {
             mBuf_Time[i] = -1;
         }
 
-        mAccelView.setBackgroundResource(R.color.Olive);
+        mLayoutTop.setBackgroundResource(R.color.lime);
         mChronometer.setBase(SystemClock.elapsedRealtime());
         mChronometer.start();
         mCount = 0;
@@ -118,7 +118,7 @@ public class AccelActivity extends Activity implements AccelListener {
 
     private void stopMeasurement() {
         mChronometer.stop();
-        mAccelView.setBackgroundResource(R.color.RosyBrown);
+        mLayoutTop.setBackgroundResource(R.color.RosyBrown);
         mRunning = false;
     }
 
@@ -127,23 +127,21 @@ public class AccelActivity extends Activity implements AccelListener {
         StringBuffer sbuf = new StringBuffer();
         sbuf.append("time:ax:ay:az \n");
         for (int i = 0; i < FFT_SIZE; i++) {
-            sbuf.append(mBuf_Time[i]/* - mBuf_Time[0]*/).append('\t').
-                    append(mBuf_AccelX[i]).append('\t').
-                    append(mBuf_AccelY[i]).append('\t').
-                    append(mBuf_AccelZ[i]).append('\t').
-                    append('\n');
+            sbuf.append(mBuf_Time[i]/* - mBuf_Time[0]*/).append('\t').append(mBuf_AccelX[i]).append('\t')
+                .append(mBuf_AccelY[i]).append('\t').append(mBuf_AccelZ[i]).append('\t').append('\n');
         }
 
         // Distribute data
         String data = sbuf.toString();
         storeDataLocally(data);
         sendDataToServer(data);
-        mAccelView.setBackgroundResource(R.color.mainSurfaceBgColor);
+        mLayoutTop.setBackgroundResource(R.color.mainSurfaceBgColor);
     }
 
     private void sendDataToServer(String data) {
         try {
-            AccelSender.sendPost(data, SERVER_URL);
+            String filename = "acceleration.txt";
+            AccelSender.sendPost(data, SERVER_URL + "/" + filename);
         } catch (Exception exc) {
             Log.e(LOGTAG + ".send", exc.getMessage());
         }
@@ -156,7 +154,7 @@ public class AccelActivity extends Activity implements AccelListener {
     }
 
     @Override
-    public void onAccelChanged(float ax, float ay, float az) {
+    public void onValueChanged(String type, float ax, float ay, float az) {
         if (!mRunning) return;
 
         if (mCount >= FFT_SIZE) {
@@ -167,8 +165,7 @@ public class AccelActivity extends Activity implements AccelListener {
 
         addAccelVal(ax, ay, az);
         mCount++;
-        //mAccelView.onAccelChanged(ax, ay, az);
-        //mAccelSpectrumView.updateSpectrum(mBuf_Spectrum);
+        mSpectrumViz.updateSpectrum(mBuf_Spectrum);
     }
 
     private void addAccelVal(float ax, float ay, float az) {
@@ -178,20 +175,20 @@ public class AccelActivity extends Activity implements AccelListener {
         mBuf_AccelX[mCount] = ax;
         mBuf_AccelY[mCount] = ay;
         mBuf_AccelZ[mCount] = az;
-        
+
         // Shift up old acceleration values ...
-        /*for (int i = 0; i < FFT_SIZE - 1; i++) {
+        for (int i = 0; i < FFT_SIZE - 1; i++) {
             mBuf_Time[i] = mBuf_Time[i + 1];
             mBuf_AccelX[i] = mBuf_AccelX[i + 1];
             mBuf_AccelY[i] = mBuf_AccelY[i + 1];
             mBuf_AccelZ[i] = mBuf_AccelZ[i + 1];
-        }*/
+        }
 
         // ... and store the new one
-        /*mBuf_Time[FFT_SIZE - 1] = mTime;
+        mBuf_Time[FFT_SIZE - 1] = mTime;
         mBuf_AccelX[FFT_SIZE - 1] = ax;
         mBuf_AccelY[FFT_SIZE - 1] = ay;
-        mBuf_AccelZ[FFT_SIZE - 1] = az;*/
+        mBuf_AccelZ[FFT_SIZE - 1] = az;
     }
 
 }

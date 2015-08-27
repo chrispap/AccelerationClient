@@ -1,4 +1,4 @@
-package chris.accelerometer;
+package vvr.breathrecorder.sensors;
 
 import android.app.Activity;
 import android.content.Context;
@@ -9,17 +9,18 @@ import android.hardware.SensorManager;
 
 public class AccelSensor implements SensorEventListener {
 
-    private AccelListener mListener;
-    private SensorManager mSensorManager;
-    private Sensor        mAccelSensor;
-    private float         ax, ay, az;
+    public static final String TYPE = "accel";
+    private SensorListener     mListener;
+    private SensorManager      mSensorManager;
+    private Sensor             mAccelSensor;
+    private float              ax, ay, az;
 
     public AccelSensor(Activity activity) {
         mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
         mAccelSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     }
 
-    public void register(AccelListener interestedActivity) {
+    public void register(SensorListener interestedActivity) {
         mSensorManager.registerListener(this, mAccelSensor, SensorManager.SENSOR_DELAY_FASTEST);
         mListener = interestedActivity;
     }
@@ -38,13 +39,7 @@ public class AccelSensor implements SensorEventListener {
         ax = event.values[0];
         ay = event.values[1];
         az = event.values[2];
-        this.mListener.onAccelChanged(ax, ay, az);
+        this.mListener.onValueChanged(TYPE, ax, ay, az);
     }
-
-}
-
-interface AccelListener {
-
-    public void onAccelChanged(float x, float y, float z);
 
 }

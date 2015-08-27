@@ -1,4 +1,4 @@
-package chris.accelerometer;
+package vvr.breathrecorder;
 
 import java.io.File;
 import java.io.FileNotFoundException;

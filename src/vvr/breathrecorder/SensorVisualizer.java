@@ -1,4 +1,4 @@
-package chris.accelerometer;
+package vvr.breathrecorder;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -7,11 +7,12 @@ import android.graphics.Paint;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
+import vvr.breathrecorder.sensors.SensorListener;
 
-public class AccelView extends View implements AccelListener {
+public class SensorVisualizer extends View implements SensorListener {
 
-    private float mAx, mAy;
-    private int   mWidth, mHeight, mSize;
+    private float  mAx, mAy;
+    private int    mWidth, mHeight, mSize;
     private PointF mMark, mCenter;
     private Paint  mPaint;
 
@@ -22,17 +23,17 @@ public class AccelView extends View implements AccelListener {
     }
 
     /* 3 Constructors */
-    public AccelView(Context context) {
+    public SensorVisualizer(Context context) {
         super(context);
         init();
     }
 
-    public AccelView(Context context, AttributeSet attrs) {
+    public SensorVisualizer(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public AccelView(Context context, AttributeSet attrs, int defStyle) {
+    public SensorVisualizer(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
     }
@@ -63,7 +64,7 @@ public class AccelView extends View implements AccelListener {
     }
 
     @Override
-    public void onAccelChanged(float ax, float ay, float az) {
+    public void onValueChanged(String tytpe, float ax, float ay, float az) {
         mAx = ax;
         mAy = ay;
         invalidate();

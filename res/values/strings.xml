@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">NoTremor app </string>
+    <string name="app_name">Breath Recorder</string>
     <string name="defaultIP">150.140.187.221</string>
     <string name="label_start">START</string>
     <string name="label_stop">STOP</string>

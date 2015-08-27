@@ -1,4 +1,4 @@
-package chris.accelerometer;
+package vvr.breathrecorder;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -15,8 +15,9 @@ import java.util.Locale;
 import java.util.Map;
 
 import android.util.Log;
+import vvr.breathrecorder.sensors.SensorListener;
 
-public class AccelSender extends Thread implements AccelListener {
+public class AccelSender extends Thread implements SensorListener {
 
     private static final String USER_AGENT = "Mozilla/5.0";
 
@@ -117,7 +118,7 @@ public class AccelSender extends Thread implements AccelListener {
     }
 
     @Override
-    public void onAccelChanged(float gx, float gy, float gz) {
+    public void onValueChanged(String type, float gx, float gy, float gz) {
         putDataToBuffer(String.format(Locale.US, "%5.3f:%5.3f:%5.3f", gx, gy, gz));
     }
 

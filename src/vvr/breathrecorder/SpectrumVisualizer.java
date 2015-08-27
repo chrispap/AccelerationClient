@@ -1,4 +1,4 @@
-package chris.accelerometer;
+package vvr.breathrecorder;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -8,7 +8,7 @@ import android.graphics.Paint.Align;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class AccelSpectrumView extends View {
+public class SpectrumVisualizer extends View {
 
     /* Drawing */
     private float   mWidth, mHeight;
@@ -23,17 +23,17 @@ public class AccelSpectrumView extends View {
     }
 
     /* 3 Constructors */
-    public AccelSpectrumView(Context context) {
+    public SpectrumVisualizer(Context context) {
         super(context);
         init();
     }
 
-    public AccelSpectrumView(Context context, AttributeSet attrs) {
+    public SpectrumVisualizer(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public AccelSpectrumView(Context context, AttributeSet attrs, int defStyle) {
+    public SpectrumVisualizer(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
     }
